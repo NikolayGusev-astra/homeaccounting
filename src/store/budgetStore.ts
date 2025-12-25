@@ -10,6 +10,7 @@ import type {
   CashGap,
   CategoryStats,
 } from '@/types/budget';
+import { supabase, getCurrentUserId, isSupabaseEnabled } from '@/lib/supabase';
 
 interface BudgetStore {
   // Data
@@ -36,6 +37,11 @@ interface BudgetStore {
   setCurrentMonth: (month: string) => void;
   exportData: () => BudgetData;
   importData: (data: BudgetData) => void;
+
+  // Actions - Supabase Sync
+  syncToSupabase: () => Promise<void>;
+  syncFromSupabase: () => Promise<void>;
+  isSyncing: boolean;
 
   // Computed
   getMonthlyForecast: (year: number, month: number, startingBalance?: number) => MonthlyForecast;
@@ -297,6 +303,7 @@ export const useBudgetStore = create<BudgetStore>()(
         defaultMonth: 'current',
       },
       currentMonth: getCurrentMonth(),
+      isSyncing: false,
 
       // Income actions
       addIncome: (incomeData) => {
@@ -306,6 +313,10 @@ export const useBudgetStore = create<BudgetStore>()(
           createdAt: new Date().toISOString(),
         };
         set((state) => ({ income: [...state.income, newIncome] }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled()) {
+          get().syncToSupabase().catch(console.error);
+        }
       },
 
       updateIncome: (id, updates) => {
@@ -314,12 +325,23 @@ export const useBudgetStore = create<BudgetStore>()(
             inc.id === id ? { ...inc, ...updates } : inc
           ),
         }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled()) {
+          get().syncToSupabase().catch(console.error);
+        }
       },
 
       deleteIncome: (id) => {
         set((state) => ({
           income: state.income.filter((inc) => inc.id !== id),
         }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled() && supabase) {
+          const userId = getCurrentUserId();
+          if (userId) {
+            supabase.from('income').delete().eq('id', id).eq('user_id', userId).catch(console.error);
+          }
+        }
       },
 
       toggleIncomeReceived: (id) => {
@@ -352,6 +374,10 @@ export const useBudgetStore = create<BudgetStore>()(
           createdAt: now.toISOString(),
         };
         set((state) => ({ expenses: [...state.expenses, newExpense] }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled()) {
+          get().syncToSupabase().catch(console.error);
+        }
       },
 
       updateExpense: (id, updates) => {
@@ -373,12 +399,23 @@ export const useBudgetStore = create<BudgetStore>()(
               : exp
           ),
         }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled()) {
+          get().syncToSupabase().catch(console.error);
+        }
       },
 
       deleteExpense: (id) => {
         set((state) => ({
           expenses: state.expenses.filter((exp) => exp.id !== id),
         }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled() && supabase) {
+          const userId = getCurrentUserId();
+          if (userId) {
+            supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);
+          }
+        }
       },
 
       toggleExpensePaid: (id) => {
@@ -461,6 +498,158 @@ export const useBudgetStore = create<BudgetStore>()(
       getTotalExpenses: (year, month) => {
         const { expenses } = get();
         return getTotalExpenses(expenses, year, month);
+      },
+
+      // Supabase Sync methods
+      syncToSupabase: async () => {
+        if (!isSupabaseEnabled() || !supabase) {
+          console.warn('Supabase not configured, skipping sync');
+          return;
+        }
+
+        const userId = getCurrentUserId();
+        if (!userId) {
+          console.warn('No user ID, skipping sync');
+          return;
+        }
+
+        set({ isSyncing: true });
+
+        try {
+          const { income, expenses } = get();
+
+          // Синхронизация доходов
+          if (income.length > 0) {
+            const incomeData = income.map(inc => ({
+              id: inc.id,
+              user_id: userId,
+              name: inc.name,
+              amount: inc.amount,
+              day_of_month: inc.dayOfMonth,
+              frequency: inc.frequency || 'monthly',
+              received: inc.received || false,
+              received_date: inc.receivedDate || null,
+              target_month: inc.targetMonth || null,
+              target_year: inc.targetYear || null,
+              notes: inc.notes || null,
+            }));
+
+            // Используем upsert для обновления или создания
+            const { error: incomeError } = await supabase
+              .from('income')
+              .upsert(incomeData, { onConflict: 'id' });
+
+            if (incomeError) {
+              console.error('Error syncing income:', incomeError);
+            }
+          }
+
+          // Синхронизация расходов
+          if (expenses.length > 0) {
+            const expensesData = expenses.map(exp => ({
+              id: exp.id,
+              user_id: userId,
+              name: exp.name,
+              amount: exp.amount,
+              category: exp.category,
+              day_of_month: exp.dayOfMonth,
+              frequency: exp.frequency || 'monthly',
+              is_paid: exp.isPaid || false,
+              is_required: exp.isRequired || false,
+              target_month: exp.targetMonth || null,
+              target_year: exp.targetYear || null,
+              notes: exp.notes || null,
+            }));
+
+            const { error: expensesError } = await supabase
+              .from('expenses')
+              .upsert(expensesData, { onConflict: 'id' });
+
+            if (expensesError) {
+              console.error('Error syncing expenses:', expensesError);
+            }
+          }
+        } catch (error) {
+          console.error('Error during sync:', error);
+        } finally {
+          set({ isSyncing: false });
+        }
+      },
+
+      syncFromSupabase: async () => {
+        if (!isSupabaseEnabled() || !supabase) {
+          console.warn('Supabase not configured, skipping sync');
+          return;
+        }
+
+        const userId = getCurrentUserId();
+        if (!userId) {
+          console.warn('No user ID, skipping sync');
+          return;
+        }
+
+        set({ isSyncing: true });
+
+        try {
+          // Загрузить доходы
+          const { data: incomeData, error: incomeError } = await supabase
+            .from('income')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: true });
+
+          if (incomeError) {
+            console.error('Error loading income:', incomeError);
+          }
+
+          // Загрузить расходы
+          const { data: expensesData, error: expensesError } = await supabase
+            .from('expenses')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: true });
+
+          if (expensesError) {
+            console.error('Error loading expenses:', expensesError);
+          }
+
+          // Преобразовать в формат приложения
+          const income: Income[] = (incomeData || []).map(inc => ({
+            id: inc.id,
+            name: inc.name,
+            amount: Number(inc.amount),
+            dayOfMonth: inc.day_of_month,
+            frequency: inc.frequency as any,
+            received: inc.received,
+            receivedDate: inc.received_date,
+            targetMonth: inc.target_month,
+            targetYear: inc.target_year,
+            notes: inc.notes || undefined,
+            createdAt: inc.created_at,
+          }));
+
+          const expenses: Expense[] = (expensesData || []).map(exp => ({
+            id: exp.id,
+            name: exp.name,
+            amount: Number(exp.amount),
+            category: exp.category as any,
+            dayOfMonth: exp.day_of_month,
+            frequency: exp.frequency as any,
+            isPaid: exp.is_paid,
+            isRequired: exp.is_required,
+            targetMonth: exp.target_month,
+            targetYear: exp.target_year,
+            notes: exp.notes || undefined,
+            history: [],
+            createdAt: exp.created_at,
+          }));
+
+          set({ income, expenses });
+        } catch (error) {
+          console.error('Error during sync from Supabase:', error);
+        } finally {
+          set({ isSyncing: false });
+        }
       },
     }),
     {
