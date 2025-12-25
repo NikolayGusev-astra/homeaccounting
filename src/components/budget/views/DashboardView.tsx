@@ -189,8 +189,8 @@ export default function DashboardView() {
             {Array.from({ length: new Date(year, month, 0).getDate() }, (_, i) => i + 1).map(day => {
               const dayData = forecast.dailyBalances.find(d => d.day === day);
               const isCashGap = dayData?.isCashGap;
-              const hasIncome = dayData?.incomeAmountAll > 0;
-              const hasExpenses = dayData?.expensesAmountAll > 0;
+              const hasIncome = dayData?.incomeAll > 0;
+              const hasExpenses = dayData?.expensesAll > 0;
               
               return (
                 <div
@@ -210,7 +210,7 @@ export default function DashboardView() {
                     <div className="text-xs text-green-400 mb-1">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="h-3 w-3" />
-                        {formatCurrency(dayData.incomeAmountAll)}
+                        {formatCurrency(dayData.incomeAll)}
                       </div>
                     </div>
                   )}
@@ -218,7 +218,7 @@ export default function DashboardView() {
                     <div className="text-xs text-pink-400 mb-1">
                       <div className="flex items-center gap-1">
                         <TrendingDown className="h-3 w-3" />
-                        {formatCurrency(dayData.expensesAmountAll)}
+                        {formatCurrency(dayData.expensesAll)}
                       </div>
                     </div>
                   )}
@@ -228,11 +228,18 @@ export default function DashboardView() {
                   `}>
                     {formatCurrency(dayData.balance || 0)}
                   </div>
-                  {isCashGap && (
-                    <div className="absolute top-2 right-2">
-                      <div className="h-2 w-2 rounded-full bg-pink-500 animate-pulse" />
-                    </div>
-                  )}
+                  {/* Визуальные индикаторы */}
+                  <div className="absolute top-2 right-2 flex gap-1">
+                    {isCashGap && (
+                      <div className="h-2 w-2 rounded-full bg-pink-500 animate-pulse" title="Кассовый разрыв" />
+                    )}
+                    {hasExpenses && !isCashGap && (
+                      <div className="h-2 w-2 rounded-full bg-pink-400" title="Расходы" />
+                    )}
+                    {hasIncome && !hasExpenses && !isCashGap && (
+                      <div className="h-2 w-2 rounded-full bg-green-400" title="Доходы" />
+                    )}
+                  </div>
                 </div>
               );
             })}
