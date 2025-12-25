@@ -18,8 +18,6 @@ import {
   Menu,
   Download,
   Upload,
-  Moon,
-  Sun,
   RefreshCw,
   LogIn,
   LogOut,
@@ -59,10 +57,10 @@ export default function DashboardLayout() {
   const monthOptions = getMonthOptions();
 
   const navigation = [
-    { id: 'dashboard' as ViewMode, label: 'Обзор', icon: LayoutDashboard },
-    { id: 'income' as ViewMode, label: 'Доходы', icon: TrendingUp },
-    { id: 'expenses' as ViewMode, label: 'Расходы', icon: CreditCard },
-    { id: 'analytics' as ViewMode, label: 'Аналитика', icon: BarChart3 },
+    { id: 'dashboard' as ViewMode, label: t('nav.dashboard'), icon: LayoutDashboard },
+    { id: 'income' as ViewMode, label: t('nav.income'), icon: TrendingUp },
+    { id: 'expenses' as ViewMode, label: t('nav.expenses'), icon: CreditCard },
+    { id: 'analytics' as ViewMode, label: t('nav.analytics'), icon: BarChart3 },
   ];
 
   const handleExport = () => {
@@ -126,12 +124,6 @@ export default function DashboardLayout() {
     }
   };
 
-  const toggleTheme = () => {
-    console.log('Theme toggle clicked, current theme:', settings.theme);
-    const newTheme = settings.theme === 'dark-neon' ? 'light' : 'dark-neon';
-    updateSettings({ theme: newTheme });
-    document.documentElement.classList.toggle('dark', newTheme === 'dark-neon');
-  };
 
   const handleSignOut = async () => {
     const { error } = await signOut();
@@ -253,29 +245,20 @@ export default function DashboardLayout() {
                 currentView={currentView}
                 setCurrentView={setCurrentView}
                 navigation={navigation}
-                handleExport={handleExport}
-                handleImport={handleImport}
-                toggleTheme={toggleTheme}
-                settings={settings}
-                handleManualSync={handleManualSync}
-                user={user}
-                onSignIn={() => setAuthDialogOpen(true)}
-                onSignOut={handleSignOut}
-                mobile
-              />
+                  handleExport={handleExport}
+                  handleImport={handleImport}
+                  settings={settings}
+                  handleManualSync={handleManualSync}
+                  user={user}
+                  onSignIn={() => setAuthDialogOpen(true)}
+                  onSignOut={handleSignOut}
+                  mobile
+                />
             </SheetContent>
           </Sheet>
           <h1 className="text-lg font-bold text-cyan-400 neon-text-cyan">
-            💰 Бухгалтерия
+            💰 {t('dashboard.title')}
           </h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="text-cyan-400"
-          >
-            {settings.theme === 'dark-neon' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </Button>
         </div>
       </div>
 
@@ -285,10 +268,10 @@ export default function DashboardLayout() {
         <aside className="hidden lg:flex flex-col w-[250px] min-h-screen bg-[#0d0d14] border-r border-cyan-500/20">
           <div className="p-6 border-b border-cyan-500/20">
             <h1 className="text-2xl font-bold text-cyan-400 neon-text-cyan">
-              💰 Бухгалтерия
+              💰 {t('dashboard.title')}
             </h1>
             <p className="text-xs text-cyan-500/60 mt-1">
-              Управление финансами
+              {t('dashboard.subtitle')}
             </p>
           </div>
 
@@ -296,15 +279,14 @@ export default function DashboardLayout() {
             currentView={currentView}
             setCurrentView={setCurrentView}
             navigation={navigation}
-            handleExport={handleExport}
-            handleImport={handleImport}
-            toggleTheme={toggleTheme}
-            settings={settings}
-            handleManualSync={handleManualSync}
-            user={user}
-            onSignIn={() => setAuthDialogOpen(true)}
-            onSignOut={handleSignOut}
-          />
+                  handleExport={handleExport}
+                  handleImport={handleImport}
+                  settings={settings}
+                  handleManualSync={handleManualSync}
+                  user={user}
+                  onSignIn={() => setAuthDialogOpen(true)}
+                  onSignOut={handleSignOut}
+                />
         </aside>
 
         {/* Main Content */}
@@ -394,7 +376,6 @@ interface NavContentProps {
   navigation: Array<{ id: ViewMode; label: string; icon: any }>;
   handleExport: () => void;
   handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  toggleTheme: () => void;
   handleManualSync?: () => void;
   settings: any;
   user?: any;
@@ -409,7 +390,6 @@ function NavContent({
   navigation,
   handleExport,
   handleImport,
-  toggleTheme,
   handleManualSync,
   settings,
   user,
@@ -490,29 +470,6 @@ function NavContent({
               Ручная синхронизация
             </Button>
           )}
-        </div>
-      )}
-
-      {/* Theme Toggle */}
-      {!mobile && (
-        <div className="pt-4 border-t border-cyan-500/20">
-          <Button
-            variant="ghost"
-            onClick={toggleTheme}
-            className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
-          >
-            {settings.theme === 'dark-neon' ? (
-              <>
-                <Sun className="h-4 w-4 mr-2" />
-                Светлая тема
-              </>
-            ) : (
-              <>
-                <Moon className="h-4 w-4 mr-2" />
-                Тёмная тема
-              </>
-            )}
-          </Button>
         </div>
       )}
 
