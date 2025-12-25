@@ -6,7 +6,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Check, X, CreditCard, Droplet, Utensils, MoreHorizontal, Edit } from 'lucide-react';
+import { Plus, Trash2, Check, X, CreditCard, Droplet, Utensils, MoreHorizontal, Edit, ArrowLeftRight } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ const categoryIcons: Record<ExpenseCategory, any> = {
   коммунальные: Droplet,
   питание: Utensils,
   прочее: MoreHorizontal,
+  переводы: ArrowLeftRight,
 };
 
 const categoryColors: Record<ExpenseCategory, string> = {
@@ -28,6 +29,7 @@ const categoryColors: Record<ExpenseCategory, string> = {
   коммунальные: 'text-blue-400',
   питание: 'text-orange-400',
   прочее: 'text-cyan-400',
+  переводы: 'text-yellow-400',
 };
 
 export default function ExpensesView() {
@@ -170,6 +172,16 @@ export default function ExpensesView() {
                              exp.frequency === 'once' ? 'Разово' : 'Ежемесячно'}
                           </Badge>
                         )}
+                        {exp.isTransfer && (
+                          <Badge className={cn(
+                            exp.transferType === 'sent' 
+                              ? "bg-orange-500/20 text-orange-400 border-orange-500/30" 
+                              : "bg-green-500/20 text-green-400 border-green-500/30",
+                            "min-w-[100px]"
+                          )}>
+                            {exp.transferType === 'sent' ? '💸 Отправлен' : '💰 Получен'}
+                          </Badge>
+                        )}
                       </div>
                       <div className="space-y-1">
                         {exp.dayOfMonth && (
@@ -263,6 +275,8 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
     targetYear: initialData?.targetYear?.toString() || '',
     isRequired: initialData?.isRequired ?? true,
     notes: initialData?.notes || '',
+    isTransfer: initialData?.isTransfer || false,
+    transferType: initialData?.transferType || 'sent' as 'sent' | 'received',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -279,6 +293,8 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
       isRequired: formData.isRequired,
       notes: formData.notes || undefined,
       frequency: formData.frequency,
+      isTransfer: formData.category === 'переводы' || formData.isTransfer || undefined,
+      transferType: (formData.category === 'переводы' || formData.isTransfer) ? formData.transferType : undefined,
     };
 
     if (formData.frequency === 'once') {
@@ -301,6 +317,7 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
           <option value="кредиты">💳 Кредиты</option>
           <option value="коммунальные">💧 Коммунальные</option>
           <option value="питание">🍔 Питание</option>
+          <option value="переводы">💸 Переводы</option>
           <option value="прочее">📱 Прочее</option>
         </select>
       </div>
@@ -320,6 +337,24 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
             <option value="интернет">📶 Интернет</option>
             <option value="тв">📺 ТВ</option>
           </select>
+        </div>
+      )}
+      {formData.category === 'переводы' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">Тип перевода</label>
+          <select
+            value={formData.transferType}
+            onChange={(e) => setFormData({ ...formData, transferType: e.target.value as 'sent' | 'received' })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="sent">💸 Отправленный перевод (расход)</option>
+            <option value="received">💰 Полученный перевод (будет в доходах)</option>
+          </select>
+          <p className="text-xs text-pink-500/60 mt-1">
+            {formData.transferType === 'sent' 
+              ? 'Отправленный перевод учитывается как расход'
+              : 'Полученный перевод будет автоматически добавлен в доходы'}
+          </p>
         </div>
       )}
       <div>

@@ -323,6 +323,30 @@ export const useBudgetStore = create<BudgetStore>()(
           createdAt: new Date().toISOString(),
         };
         set((state) => ({ income: [...state.income, newIncome] }));
+        
+        // Если это отправленный перевод, автоматически создаем его в расходах
+        if (incomeData.isTransfer && incomeData.transferType === 'sent') {
+          const newExpense: Expense = {
+            id: generateId(),
+            category: 'переводы',
+            name: incomeData.name,
+            amount: incomeData.amount,
+            dayOfMonth: incomeData.dayOfMonth,
+            dueDate: null,
+            isPaid: false,
+            isRequired: false,
+            notes: incomeData.notes,
+            history: [],
+            createdAt: new Date().toISOString(),
+            frequency: incomeData.frequency,
+            targetYear: incomeData.targetYear,
+            targetMonth: incomeData.targetMonth,
+            isTransfer: true,
+            transferType: 'sent',
+          };
+          set((state) => ({ expenses: [...state.expenses, newExpense] }));
+        }
+        
         // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
@@ -385,6 +409,27 @@ export const useBudgetStore = create<BudgetStore>()(
           createdAt: now.toISOString(),
         };
         set((state) => ({ expenses: [...state.expenses, newExpense] }));
+        
+        // Если это полученный перевод, автоматически создаем его в доходах
+        if (expenseData.isTransfer && expenseData.transferType === 'received') {
+          const newIncome: Income = {
+            id: generateId(),
+            name: expenseData.name,
+            amount: expenseData.amount,
+            dayOfMonth: expenseData.dayOfMonth || 1,
+            frequency: expenseData.frequency || 'monthly',
+            received: false,
+            receivedDate: null,
+            notes: expenseData.notes,
+            createdAt: new Date().toISOString(),
+            targetYear: expenseData.targetYear,
+            targetMonth: expenseData.targetMonth,
+            isTransfer: true,
+            transferType: 'received',
+          };
+          set((state) => ({ income: [...state.income, newIncome] }));
+        }
+        
         // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
@@ -544,6 +589,8 @@ export const useBudgetStore = create<BudgetStore>()(
               target_month: inc.targetMonth || null,
               target_year: inc.targetYear || null,
               notes: inc.notes || null,
+              is_transfer: inc.isTransfer || false,
+              transfer_type: inc.transferType || null,
             }));
 
             // Используем upsert для обновления или создания
@@ -571,6 +618,8 @@ export const useBudgetStore = create<BudgetStore>()(
               target_month: exp.targetMonth || null,
               target_year: exp.targetYear || null,
               notes: exp.notes || null,
+              is_transfer: exp.isTransfer || false,
+              transfer_type: exp.transferType || null,
             }));
 
             const { error: expensesError } = await supabase
@@ -637,6 +686,8 @@ export const useBudgetStore = create<BudgetStore>()(
             targetMonth: inc.target_month,
             targetYear: inc.target_year,
             notes: inc.notes || undefined,
+            isTransfer: inc.is_transfer || undefined,
+            transferType: inc.transfer_type || undefined,
             createdAt: inc.created_at,
           }));
 
@@ -652,6 +703,8 @@ export const useBudgetStore = create<BudgetStore>()(
             targetMonth: exp.target_month,
             targetYear: exp.target_year,
             notes: exp.notes || undefined,
+            isTransfer: exp.is_transfer || undefined,
+            transferType: exp.transfer_type || undefined,
             history: [],
             createdAt: exp.created_at,
           }));

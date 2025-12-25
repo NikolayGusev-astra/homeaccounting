@@ -36,6 +36,8 @@ export interface Income {
   createdAt: string;
   targetYear?: number;
   targetMonth?: number;
+  isTransfer?: boolean;
+  transferType?: 'sent' | 'received'; // sent = отправленный (должен быть в расходах), received = полученный (в доходах)
 }
 
 export interface CreditDetails {
@@ -56,7 +58,7 @@ export interface ExpenseHistory {
   status: 'planned' | 'paid' | 'changed';
 }
 
-export type ExpenseCategory = 'кредиты' | 'коммунальные' | 'питание' | 'прочее';
+export type ExpenseCategory = 'кредиты' | 'коммунальные' | 'питание' | 'прочее' | 'переводы';
 
 export type ExpenseSubcategory = 'электро' | 'газ' | 'вода' | 'отопление' | 'интернет' | 'тв';
 
@@ -78,6 +80,8 @@ export interface Expense {
   frequency?: 'monthly' | 'weekly' | 'biweekly' | 'once';
   targetYear?: number;
   targetMonth?: number;
+  isTransfer?: boolean;
+  transferType?: 'sent' | 'received'; // sent = отправленный (в расходах), received = полученный (должен быть в доходах)
 }
 
 export type PaymentStatus = 'unpaid' | 'paid' | 'overdue';

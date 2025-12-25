@@ -175,6 +175,8 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
     targetYear: initialData?.targetYear?.toString() || '',
     received: initialData?.received || false,
     notes: initialData?.notes || '',
+    isTransfer: initialData?.isTransfer || false,
+    transferType: initialData?.transferType || 'received' as 'sent' | 'received',
   });
 
   // Синхронизируем formData с initialData при изменении editingIncome
@@ -189,6 +191,8 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
         targetYear: initialData.targetYear?.toString() || '',
         received: initialData.received || false,
         notes: initialData.notes || '',
+        isTransfer: initialData.isTransfer || false,
+        transferType: initialData.transferType || 'received' as 'sent' | 'received',
       });
     }
   }, [initialData]);
@@ -204,6 +208,8 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
       received: initialData?.received ?? false, // При редактировании сохраняем исходный статус, при создании - false
       receivedDate: initialData?.received ? initialData.receivedDate : null, // При редактировании сохраняем исходную дату, при создании - null
       notes: formData.notes || undefined,
+      isTransfer: formData.isTransfer || undefined,
+      transferType: formData.isTransfer ? formData.transferType : undefined,
     };
 
     // Добавляем поля targetMonth и targetYear только для разовых платежей
@@ -294,6 +300,38 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
               placeholder="2024"
             />
           </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="isTransfer"
+          checked={formData.isTransfer}
+          onChange={(e) => setFormData({ ...formData, isTransfer: e.target.checked })}
+          className="w-4 h-4 text-cyan-400 bg-[#0a0a0f] border-cyan-500/30 rounded focus:ring-cyan-400"
+        />
+        <label htmlFor="isTransfer" className="text-sm font-medium text-cyan-400 cursor-pointer">
+          Это перевод
+        </label>
+      </div>
+
+      {formData.isTransfer && (
+        <div>
+          <label className="text-sm font-medium text-cyan-400 mb-2 block">Тип перевода</label>
+          <select
+            value={formData.transferType}
+            onChange={(e) => setFormData({ ...formData, transferType: e.target.value as 'sent' | 'received' })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none neon-input"
+          >
+            <option value="received">💰 Полученный перевод (доход)</option>
+            <option value="sent">💸 Отправленный перевод (будет в расходах)</option>
+          </select>
+          <p className="text-xs text-cyan-500/60 mt-1">
+            {formData.transferType === 'received' 
+              ? 'Полученный перевод учитывается как доход'
+              : 'Отправленный перевод будет автоматически добавлен в расходы'}
+          </p>
         </div>
       )}
       

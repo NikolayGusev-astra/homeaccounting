@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS public.income (
   target_month INTEGER,
   target_year INTEGER,
   notes TEXT,
+  is_transfer BOOLEAN DEFAULT false,
+  transfer_type TEXT CHECK (transfer_type IN ('sent', 'received')),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -34,6 +36,8 @@ CREATE TABLE IF NOT EXISTS public.expenses (
   target_month INTEGER,
   target_year INTEGER,
   notes TEXT,
+  is_transfer BOOLEAN DEFAULT false,
+  transfer_type TEXT CHECK (transfer_type IN ('sent', 'received')),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
