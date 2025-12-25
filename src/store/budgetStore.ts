@@ -396,6 +396,10 @@ export const useBudgetStore = create<BudgetStore>()(
               : inc
           ),
         }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled()) {
+          get().syncToSupabase().catch(console.error);
+        }
       },
 
       // Expense actions
@@ -504,6 +508,10 @@ export const useBudgetStore = create<BudgetStore>()(
               : exp
           ),
         }));
+        // Автоматическая синхронизация с Supabase
+        if (isSupabaseEnabled()) {
+          get().syncToSupabase().catch(console.error);
+        }
       },
 
       addActualExpense: (expenseId, actualExpenseData) => {
