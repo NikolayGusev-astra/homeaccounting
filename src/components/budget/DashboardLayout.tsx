@@ -20,11 +20,13 @@ import {
   Upload,
   Moon,
   Sun,
+  Database,
 } from 'lucide-react';
 import DashboardView from './views/DashboardView';
 import IncomeView from './views/IncomeView';
 import ExpensesView from './views/ExpensesView';
 import AnalyticsView from './views/AnalyticsView';
+import { testSupabaseConnection, testSupabaseWrite } from '@/lib/supabase-test';
 
 export default function DashboardLayout() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
@@ -87,6 +89,19 @@ export default function DashboardLayout() {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handleTestSupabase = async () => {
+    const result = await testSupabaseConnection();
+    alert(result.message);
+    console.log('Результат проверки Supabase:', result);
+    
+    if (result.success) {
+      // Дополнительная проверка записи
+      const writeResult = await testSupabaseWrite();
+      alert(writeResult.message);
+      console.log('Результат проверки записи:', writeResult);
+    }
   };
 
   const toggleTheme = () => {
@@ -181,6 +196,7 @@ export default function DashboardLayout() {
             handleImport={handleImport}
             toggleTheme={toggleTheme}
             settings={settings}
+            handleTestSupabase={handleTestSupabase}
           />
         </aside>
 
@@ -260,6 +276,7 @@ interface NavContentProps {
   handleExport: () => void;
   handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   toggleTheme: () => void;
+  handleTestSupabase?: () => void;
   settings: any;
   mobile?: boolean;
 }
@@ -271,6 +288,7 @@ function NavContent({
   handleExport,
   handleImport,
   toggleTheme,
+  handleTestSupabase,
   settings,
   mobile = false
 }: NavContentProps) {
@@ -337,6 +355,16 @@ function NavContent({
               className="hidden"
             />
           </label>
+          {handleTestSupabase && (
+            <Button
+              variant="ghost"
+              onClick={handleTestSupabase}
+              className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
+            >
+              <Database className="h-4 w-4 mr-2" />
+              Проверить Supabase
+            </Button>
+          )}
         </div>
       )}
 
