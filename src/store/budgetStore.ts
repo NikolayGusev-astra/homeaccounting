@@ -322,11 +322,11 @@ export const useBudgetStore = create<BudgetStore>()(
           id: generateId(),
           createdAt: new Date().toISOString(),
         };
-        set((state) => ({ income: [...state.income, newIncome] }));
         
         // Если это отправленный перевод, автоматически создаем его в расходах
+        let newExpense: Expense | null = null;
         if (incomeData.isTransfer && incomeData.transferType === 'sent') {
-          const newExpense: Expense = {
+          newExpense = {
             id: generateId(),
             category: 'переводы',
             name: incomeData.name,
@@ -344,8 +344,13 @@ export const useBudgetStore = create<BudgetStore>()(
             isTransfer: true,
             transferType: 'sent',
           };
-          set((state) => ({ expenses: [...state.expenses, newExpense] }));
         }
+        
+        // Обновляем состояние одним вызовом
+        set((state) => ({
+          income: [...state.income, newIncome],
+          expenses: newExpense ? [...state.expenses, newExpense] : state.expenses,
+        }));
         
         // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled()) {
@@ -408,11 +413,11 @@ export const useBudgetStore = create<BudgetStore>()(
           ],
           createdAt: now.toISOString(),
         };
-        set((state) => ({ expenses: [...state.expenses, newExpense] }));
         
         // Если это полученный перевод, автоматически создаем его в доходах
+        let newIncome: Income | null = null;
         if (expenseData.isTransfer && expenseData.transferType === 'received') {
-          const newIncome: Income = {
+          newIncome = {
             id: generateId(),
             name: expenseData.name,
             amount: expenseData.amount,
@@ -427,8 +432,13 @@ export const useBudgetStore = create<BudgetStore>()(
             isTransfer: true,
             transferType: 'received',
           };
-          set((state) => ({ income: [...state.income, newIncome] }));
         }
+        
+        // Обновляем состояние одним вызовом
+        set((state) => ({
+          expenses: [...state.expenses, newExpense],
+          income: newIncome ? [...state.income, newIncome] : state.income,
+        }));
         
         // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled()) {
