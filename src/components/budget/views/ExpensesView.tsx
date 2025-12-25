@@ -242,6 +242,9 @@ export default function ExpensesView() {
         <DialogContent className="bg-[#0d0d14] border-pink-500/30 max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-pink-400">Редактировать расход</DialogTitle>
+            <DialogDescription className="text-pink-500/60">
+              Измените данные расхода
+            </DialogDescription>
           </DialogHeader>
           <ExpenseForm
             onSubmit={(data) => {
