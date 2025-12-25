@@ -22,11 +22,32 @@ export default function IncomeView() {
   const [editingIncome, setEditingIncome] = React.useState<any>(null);
   const [filter, setFilter] = React.useState<'all' | 'received' | 'unreceived'>('all');
 
-  // Получаем выбранный месяц и год
-  const [selectedYear, selectedMonth] = currentMonth.split('-').map(Number);
+  // Получаем выбранный месяц и год с проверкой
+  const { selectedYear, selectedMonth } = React.useMemo(() => {
+    if (!currentMonth || typeof currentMonth !== 'string') {
+      const now = new Date();
+      return { selectedYear: now.getFullYear(), selectedMonth: now.getMonth() + 1 };
+    }
+    try {
+      const parts = currentMonth.split('-');
+      if (parts.length !== 2) {
+        const now = new Date();
+        return { selectedYear: now.getFullYear(), selectedMonth: now.getMonth() + 1 };
+      }
+      return {
+        selectedYear: Number(parts[0]),
+        selectedMonth: Number(parts[1])
+      };
+    } catch (error) {
+      const now = new Date();
+      return { selectedYear: now.getFullYear(), selectedMonth: now.getMonth() + 1 };
+    }
+  }, [currentMonth]);
 
   // Функция для проверки, относится ли доход к выбранному месяцу
-  const isIncomeInMonth = (inc: any) => {
+  const isIncomeInMonth = React.useCallback((inc: any) => {
+    if (!inc || !inc.frequency) return true;
+    
     if (inc.frequency === 'once') {
       // Для разовых - проверяем targetMonth и targetYear
       return inc.targetYear === selectedYear && inc.targetMonth === selectedMonth;
@@ -38,15 +59,20 @@ export default function IncomeView() {
       return true;
     }
     return true;
-  };
+  }, [selectedYear, selectedMonth]);
 
   // Фильтрация доходов по месяцу и статусу
-  const filteredIncome = income.filter(inc => {
-    if (!isIncomeInMonth(inc)) return false;
-    if (filter === 'received') return inc.received;
-    if (filter === 'unreceived') return !inc.received;
-    return true;
-  });
+  const filteredIncome = React.useMemo(() => {
+    if (!income || !Array.isArray(income)) return [];
+    
+    return income.filter(inc => {
+      if (!inc) return false;
+      if (!isIncomeInMonth(inc)) return false;
+      if (filter === 'received') return inc.received;
+      if (filter === 'unreceived') return !inc.received;
+      return true;
+    });
+  }, [income, filter, isIncomeInMonth]);
 
   return (
     <div className="space-y-6">

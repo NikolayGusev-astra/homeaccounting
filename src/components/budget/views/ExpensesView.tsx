@@ -78,11 +78,32 @@ export default function ExpensesView() {
   const [filter, setFilter] = React.useState<'all' | 'required' | 'optional'>('all');
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
 
-  // Получаем выбранный месяц и год
-  const [selectedYear, selectedMonth] = currentMonth.split('-').map(Number);
+  // Получаем выбранный месяц и год с проверкой
+  const { selectedYear, selectedMonth } = React.useMemo(() => {
+    if (!currentMonth || typeof currentMonth !== 'string') {
+      const now = new Date();
+      return { selectedYear: now.getFullYear(), selectedMonth: now.getMonth() + 1 };
+    }
+    try {
+      const parts = currentMonth.split('-');
+      if (parts.length !== 2) {
+        const now = new Date();
+        return { selectedYear: now.getFullYear(), selectedMonth: now.getMonth() + 1 };
+      }
+      return {
+        selectedYear: Number(parts[0]),
+        selectedMonth: Number(parts[1])
+      };
+    } catch (error) {
+      const now = new Date();
+      return { selectedYear: now.getFullYear(), selectedMonth: now.getMonth() + 1 };
+    }
+  }, [currentMonth]);
 
   // Функция для проверки, относится ли расход к выбранному месяцу
-  const isExpenseInMonth = (exp: any) => {
+  const isExpenseInMonth = React.useCallback((exp: any) => {
+    if (!exp || !exp.frequency) return true;
+    
     if (exp.frequency === 'once') {
       // Для разовых - проверяем targetMonth и targetYear
       return exp.targetYear === selectedYear && exp.targetMonth === selectedMonth;
@@ -94,28 +115,41 @@ export default function ExpensesView() {
       return true;
     }
     return true;
-  };
+  }, [selectedYear, selectedMonth]);
 
   // Фильтрация расходов по месяцу, статусу и категории
-  const filteredExpenses = expenses.filter(exp => {
-    // Фильтр по месяцу
-    if (!isExpenseInMonth(exp)) return false;
+  const filteredExpenses = React.useMemo(() => {
+    if (!expenses || !Array.isArray(expenses)) return [];
     
-    // Фильтр по обязательности
-    if (filter === 'required') {
-      if (!exp.isRequired) return false;
-    } else if (filter === 'optional') {
-      if (exp.isRequired) return false;
-    }
-    
-    // Фильтр по категории
-    if (categoryFilter !== 'all' && exp.category !== categoryFilter) return false;
-    
-    return true;
-  });
+    return expenses.filter(exp => {
+      if (!exp) return false;
+      
+      // Фильтр по месяцу
+      if (!isExpenseInMonth(exp)) return false;
+      
+      // Фильтр по обязательности
+      if (filter === 'required') {
+        if (!exp.isRequired) return false;
+      } else if (filter === 'optional') {
+        if (exp.isRequired) return false;
+      }
+      
+      // Фильтр по категории
+      if (categoryFilter !== 'all' && exp.category !== categoryFilter) return false;
+      
+      return true;
+    });
+  }, [expenses, filter, categoryFilter, isExpenseInMonth]);
 
-  const totalRequired = expenses.filter(e => e.isRequired).reduce((sum, e) => sum + e.amount, 0);
-  const totalOptional = expenses.filter(e => !e.isRequired).reduce((sum, e) => sum + e.amount, 0);
+  const totalRequired = React.useMemo(() => {
+    if (!expenses || !Array.isArray(expenses)) return 0;
+    return expenses.filter(e => e && e.isRequired).reduce((sum, e) => sum + (e.amount || 0), 0);
+  }, [expenses]);
+
+  const totalOptional = React.useMemo(() => {
+    if (!expenses || !Array.isArray(expenses)) return 0;
+    return expenses.filter(e => e && !e.isRequired).reduce((sum, e) => sum + (e.amount || 0), 0);
+  }, [expenses]);
 
   return (
     <div className="space-y-6">
