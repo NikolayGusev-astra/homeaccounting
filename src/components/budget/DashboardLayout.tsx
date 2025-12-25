@@ -205,6 +205,10 @@ export default function DashboardLayout() {
                 handleImport={handleImport}
                 toggleTheme={toggleTheme}
                 settings={settings}
+                handleManualSync={handleManualSync}
+                user={user}
+                onSignIn={() => setAuthDialogOpen(true)}
+                onSignOut={handleSignOut}
                 mobile
               />
             </SheetContent>
