@@ -606,7 +606,7 @@ export const useBudgetStore = create<BudgetStore>()(
             // Используем upsert для обновления или создания
             const { error: incomeError } = await supabase
               .from('income')
-              .upsert(incomeData, { onConflict: 'id' });
+              .upsert(incomeData);
 
             if (incomeError) {
               console.error('Error syncing income:', incomeError);
