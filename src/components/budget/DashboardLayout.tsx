@@ -20,13 +20,12 @@ import {
   Upload,
   Moon,
   Sun,
-  Database,
+  RefreshCw,
 } from 'lucide-react';
 import DashboardView from './views/DashboardView';
 import IncomeView from './views/IncomeView';
 import ExpensesView from './views/ExpensesView';
 import AnalyticsView from './views/AnalyticsView';
-import { testSupabaseConnection, testSupabaseWrite } from '@/lib/supabase-test';
 
 export default function DashboardLayout() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
@@ -91,16 +90,27 @@ export default function DashboardLayout() {
     reader.readAsText(file);
   };
 
-  const handleTestSupabase = async () => {
-    const result = await testSupabaseConnection();
-    alert(result.message);
-    console.log('Результат проверки Supabase:', result);
+  const handleManualSync = async () => {
+    const { syncToSupabase, isSyncing, income, expenses } = useBudgetStore.getState();
     
-    if (result.success) {
-      // Дополнительная проверка записи
-      const writeResult = await testSupabaseWrite();
-      alert(writeResult.message);
-      console.log('Результат проверки записи:', writeResult);
+    if (isSyncing) {
+      alert('Синхронизация уже выполняется...');
+      return;
+    }
+
+    const totalItems = income.length + expenses.length;
+    if (totalItems === 0) {
+      alert('Нет данных для синхронизации');
+      return;
+    }
+
+    try {
+      await syncToSupabase();
+      alert(`✅ Синхронизация завершена!\nДоходов: ${income.length}\nРасходов: ${expenses.length}`);
+      console.log('Ручная синхронизация завершена успешно');
+    } catch (error) {
+      console.error('Ошибка синхронизации:', error);
+      alert(`❌ Ошибка синхронизации: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
     }
   };
 
@@ -196,7 +206,7 @@ export default function DashboardLayout() {
             handleImport={handleImport}
             toggleTheme={toggleTheme}
             settings={settings}
-            handleTestSupabase={handleTestSupabase}
+            handleManualSync={handleManualSync}
           />
         </aside>
 
@@ -276,7 +286,7 @@ interface NavContentProps {
   handleExport: () => void;
   handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   toggleTheme: () => void;
-  handleTestSupabase?: () => void;
+  handleManualSync?: () => void;
   settings: any;
   mobile?: boolean;
 }
@@ -288,7 +298,7 @@ function NavContent({
   handleExport,
   handleImport,
   toggleTheme,
-  handleTestSupabase,
+  handleManualSync,
   settings,
   mobile = false
 }: NavContentProps) {
@@ -355,14 +365,14 @@ function NavContent({
               className="hidden"
             />
           </label>
-          {handleTestSupabase && (
+          {handleManualSync && (
             <Button
               variant="ghost"
-              onClick={handleTestSupabase}
+              onClick={handleManualSync}
               className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
             >
-              <Database className="h-4 w-4 mr-2" />
-              Проверить Supabase
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Ручная синхронизация
             </Button>
           )}
         </div>
