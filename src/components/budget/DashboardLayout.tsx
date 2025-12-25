@@ -29,6 +29,7 @@ import IncomeView from './views/IncomeView';
 import ExpensesView from './views/ExpensesView';
 import AnalyticsView from './views/AnalyticsView';
 import { AuthDialog } from '@/components/auth/AuthDialog';
+import { QuickAddDialog } from './QuickAddDialog';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 
 export default function DashboardLayout() {
@@ -37,6 +38,11 @@ export default function DashboardLayout() {
   const [isMounted, setIsMounted] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [quickAddDialogOpen, setQuickAddDialogOpen] = useState(false);
+  
+  // Long press handler для мобильных устройств
+  const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = React.useRef(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -164,6 +170,52 @@ export default function DashboardLayout() {
 
     return () => {
       subscription.unsubscribe();
+    };
+  }, []);
+
+  // Обработчики long press для мобильных устройств
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Только на мобильных устройствах (ширина экрана < 1024px)
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      isLongPressRef.current = false;
+      longPressTimerRef.current = setTimeout(() => {
+        isLongPressRef.current = true;
+        setQuickAddDialogOpen(true);
+        // Вибрация (если поддерживается)
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      }, 500); // 500ms для long press
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    // Предотвращаем обычный клик, если был long press
+    if (isLongPressRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      isLongPressRef.current = false;
+    }
+  };
+
+  const handleTouchMove = () => {
+    // Отменяем long press при движении
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  // Очистка таймера при размонтировании
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
     };
   }, []);
 
@@ -308,7 +360,13 @@ export default function DashboardLayout() {
           </header>
 
           {/* Content Area */}
-          <div className="p-6 flex-1">
+          <div 
+            className="p-6 flex-1 lg:select-none"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+            style={{ touchAction: 'manipulation' }}
+          >
             {renderView()}
           </div>
 
@@ -323,6 +381,9 @@ export default function DashboardLayout() {
 
       {/* Auth Dialog */}
       <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
+      
+      {/* Quick Add Dialog (long press на мобильных) */}
+      <QuickAddDialog open={quickAddDialogOpen} onOpenChange={setQuickAddDialogOpen} />
     </div>
   );
 }
