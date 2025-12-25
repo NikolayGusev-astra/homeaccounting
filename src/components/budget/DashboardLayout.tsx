@@ -495,6 +495,9 @@ function NavContent({
       {/* Mobile Data Management */}
       {mobile && (
         <div className="space-y-2 pt-4 border-t border-cyan-500/20">
+          <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
+            Данные
+          </p>
           <Button
             variant="ghost"
             onClick={handleExport}
@@ -521,6 +524,53 @@ function NavContent({
               className="hidden"
             />
           </label>
+          {handleManualSync && (
+            <Button
+              variant="ghost"
+              onClick={handleManualSync}
+              className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Ручная синхронизация
+            </Button>
+          )}
+        </div>
+      )}
+
+      {/* Mobile Auth Section */}
+      {mobile && (
+        <div className="space-y-2 pt-4 border-t border-cyan-500/20">
+          <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
+            Аккаунт
+          </p>
+          {user ? (
+            <>
+              <div className="px-4 py-2 text-sm text-cyan-400">
+                {user.email || 'Пользователь'}
+              </div>
+              {onSignOut && (
+                <Button
+                  variant="ghost"
+                  onClick={onSignOut}
+                  className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Выйти
+                </Button>
+              )}
+            </>
+          ) : (
+            onSignIn && (
+              <Button
+                variant="ghost"
+                onClick={onSignIn}
+                className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
+              >
+                <LogIn className="h-4 w-4 mr-2" />
+                Войти
+              </Button>
+            )
+          )}
         </div>
       )}
     </div>
