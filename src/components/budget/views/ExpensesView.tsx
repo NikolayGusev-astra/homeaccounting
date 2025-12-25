@@ -219,7 +219,7 @@ export default function ExpensesView() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <CategoryIcon className={`h-5 w-5 ${categoryColors[exp.category]}`} />
                         <h3 className="text-lg font-semibold text-pink-300">{exp.name}</h3>
                         <Badge
@@ -231,6 +231,11 @@ export default function ExpensesView() {
                         <Badge variant="outline" className="border-cyan-500/30 text-cyan-500/60 min-w-[80px]">
                           {categoryLabels[exp.category] || exp.category}
                         </Badge>
+                        {exp.subcategory && (
+                          <Badge variant="outline" className="text-xs bg-pink-500/10 text-pink-400 border-pink-500/30">
+                            {subcategoryLabels[exp.subcategory] || exp.subcategory}
+                          </Badge>
+                        )}
                         {exp.isRequired && (
                           <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
                             Обязательно
