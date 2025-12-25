@@ -1,0 +1,68 @@
+$ next dev -p 3000 2>&1 | tee dev.log
+   ▲ Next.js 15.3.5
+   - Local:        http://localhost:3000
+   - Network:      http://21.0.10.253:3000
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1656ms
+ ○ Compiling / ...
+ ✓ Compiled / in 11.9s (2012 modules)
+ GET / 200 in 12600ms
+ ○ Compiling /api/budget ...
+ ✓ Compiled /api/budget in 2.3s (2013 modules)
+ GET /api/budget?type=sample 200 in 2414ms
+ GET / 200 in 1231ms
+ GET / 200 in 235ms
+ GET /api/budget?type=sample 200 in 42ms
+ ✓ Compiled in 1125ms (1995 modules)
+ GET / 200 in 553ms
+ GET / 200 in 211ms
+ ✓ Compiled /api/budget in 388ms (1029 modules)
+ GET /api/budget?type=sample 200 in 487ms
+ ✓ Compiled in 1246ms (1995 modules)
+ GET / 200 in 584ms
+ GET / 200 in 205ms
+ ✓ Compiled /api/budget in 374ms (1029 modules)
+ GET /api/budget?type=sample 200 in 448ms
+ GET /api/budget?type=sample 200 in 12ms
+ GET / 200 in 192ms
+ GET /api/budget?type=sample 200 in 9ms
+ ⚠ Cross origin request detected from preview-chat-1392659d-556d-4700-9697-a5dad626001c.space.z.ai to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ✓ Compiled in 1234ms (1995 modules)
+ GET / 200 in 562ms
+ GET / 200 in 261ms
+ ○ Compiling /api/budget ...
+ ✓ Compiled /api/budget in 581ms (1029 modules)
+ GET /api/budget?type=sample 200 in 671ms
+ ✓ Compiled in 1203ms (1995 modules)
+ GET / 200 in 557ms
+ GET / 200 in 214ms
+ ✓ Compiled /api/budget in 411ms (1029 modules)
+ GET /api/budget?type=sample 200 in 464ms
+ GET / 200 in 280ms
+ GET /api/budget?type=sample 200 in 11ms
+ GET / 200 in 92ms
+ GET /api/budget?type=sample 200 in 11ms
+ ✓ Compiled in 2.2s (1993 modules)
+ GET / 200 in 1516ms
+ GET / 200 in 248ms
+ ○ Compiling /api/budget ...
+ ✓ Compiled /api/budget in 664ms (1028 modules)
+ GET /api/budget?type=sample 200 in 790ms
+ GET / 200 in 267ms
+ GET /api/budget?type=sample 200 in 12ms
+ ✓ Compiled in 1642ms (1993 modules)
+ GET / 200 in 1712ms
+ GET / 200 in 2277ms
+ GET / 200 in 234ms
+ ○ Compiling /api/budget ...
+ ✓ Compiled /api/budget in 654ms (1028 modules)
+ GET /api/budget?type=sample 200 in 745ms
+ GET / 200 in 385ms
+ GET /api/budget?type=sample 200 in 13ms
+ GET / 200 in 154ms
+ GET /api/budget?type=sample 200 in 11ms
+ GET / 200 in 165ms
+ GET /api/budget?type=sample 200 in 105ms
