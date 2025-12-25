@@ -15,7 +15,7 @@ import {
 import { formatCurrency } from '@/lib/utils';
 
 export default function DashboardView() {
-  const { currentMonth, getMonthlyForecast, getTotalExpenses, income, expenses } = useBudgetStore();
+  const { currentMonth, getMonthlyForecast, getTotalExpenses, income, expenses, settings } = useBudgetStore();
   const [selectedDay, setSelectedDay] = React.useState<any>(null);
   const [, setTick] = React.useState(0);
 
@@ -27,10 +27,54 @@ export default function DashboardView() {
 
   const [year, month] = currentMonth.split('-').map(Number);
   
-  // Рассчитываем прогноз для предыдущего месяца, чтобы получить его финальный баланс
-  const [prevYear, prevMonth] = month === 1 ? [year - 1, 12] : [year, month - 1];
-  const previousForecast = getMonthlyForecast(prevYear, prevMonth, 0);
-  const startingBalance = previousForecast.endingBalance;
+  // Определяем начальный баланс для текущего месяца
+  // Для первого месяца используем initialBalance, для последующих - endingBalance предыдущего месяца
+  let startingBalance = settings.initialBalance || 0;
+  
+  // Если есть данные, рассчитываем прогноз для предыдущего месяца для переноса остатка
+  if (income.length > 0 || expenses.length > 0) {
+    const [prevYear, prevMonth] = month === 1 ? [year - 1, 12] : [year, month - 1];
+    
+    // Находим самый ранний месяц с данными
+    const allDates: Date[] = [];
+    income.forEach(inc => allDates.push(new Date(inc.createdAt)));
+    expenses.forEach(exp => allDates.push(new Date(exp.createdAt)));
+    
+    if (allDates.length > 0) {
+      const earliestDate = allDates.reduce((earliest, date) => 
+        date < earliest ? date : earliest
+      );
+      const earliestYear = earliestDate.getFullYear();
+      const earliestMonth = earliestDate.getMonth() + 1;
+      
+      // Если предыдущий месяц раньше самого раннего месяца с данными, используем initialBalance
+      if (prevYear < earliestYear || (prevYear === earliestYear && prevMonth < earliestMonth)) {
+        startingBalance = settings.initialBalance || 0;
+      } else {
+        // Рассчитываем баланс от самого раннего месяца до предыдущего
+        let calcYear = earliestYear;
+        let calcMonth = earliestMonth;
+        let calcBalance = settings.initialBalance || 0;
+        
+        // Рассчитываем все месяцы от самого раннего до предыдущего включительно
+        while (calcYear < prevYear || (calcYear === prevYear && calcMonth <= prevMonth)) {
+          const forecast = getMonthlyForecast(calcYear, calcMonth, calcBalance);
+          calcBalance = forecast.endingBalance;
+          
+          // Переходим к следующему месяцу
+          if (calcMonth === 12) {
+            calcYear++;
+            calcMonth = 1;
+          } else {
+            calcMonth++;
+          }
+        }
+        
+        // startingBalance для текущего месяца = endingBalance предыдущего месяца
+        startingBalance = calcBalance;
+      }
+    }
+  }
   
   // Получаем прогноз для текущего месяца с правильным начальным балансом
   const forecast = getMonthlyForecast(year, month, startingBalance);

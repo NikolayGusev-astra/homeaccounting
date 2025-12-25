@@ -130,6 +130,7 @@ export interface AppSettings {
   theme: 'dark-neon' | 'light';
   notifications: boolean;
   defaultMonth: 'current' | 'next';
+  initialBalance?: number; // Начальный баланс для нового пользователя
 }
 
 export interface BudgetData {

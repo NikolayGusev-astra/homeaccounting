@@ -156,7 +156,8 @@ const calculateForecast = (
 
     // Get expense transactions for this day
     const dayExpenseTransactions = expenseOccurrences.get(day) || [];
-    const expenseAmount = dayExpenseTransactions.reduce((sum, exp) => !exp.isPaid ? sum + exp.amount : sum, 0); // For balance
+    // Все расходы учитываются в балансе, независимо от статуса оплаты
+    const expenseAmount = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0);
     const expenseAmountAll = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0); // For calendar display
 
     // Update balance
