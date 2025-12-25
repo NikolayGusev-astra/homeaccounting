@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import type { ExpenseCategory } from '@/types/budget';
@@ -69,6 +70,9 @@ export default function ExpensesView() {
           <DialogContent className="bg-[#0d0d14] border-pink-500/30 max-w-lg">
             <DialogHeader>
               <DialogTitle className="text-pink-400">Добавить расход</DialogTitle>
+              <DialogDescription className="text-pink-500/60">
+                Заполните форму для добавления нового расхода
+              </DialogDescription>
             </DialogHeader>
             <ExpenseForm
               onSubmit={(data) => {
