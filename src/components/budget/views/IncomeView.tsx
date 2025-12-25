@@ -16,11 +16,37 @@ import {
 } from '@/components/ui/dialog';
 
 export default function IncomeView() {
-  const { income, deleteIncome, toggleIncomeReceived, addIncome, updateIncome } = useBudgetStore();
+  const { income, deleteIncome, toggleIncomeReceived, addIncome, updateIncome, currentMonth } = useBudgetStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingIncome, setEditingIncome] = React.useState<any>(null);
   const [filter, setFilter] = React.useState<'all' | 'received' | 'unreceived'>('all');
+
+  // Получаем выбранный месяц и год
+  const [selectedYear, selectedMonth] = currentMonth.split('-').map(Number);
+
+  // Функция для проверки, относится ли доход к выбранному месяцу
+  const isIncomeInMonth = (inc: any) => {
+    if (inc.frequency === 'once') {
+      // Для разовых - проверяем targetMonth и targetYear
+      return inc.targetYear === selectedYear && inc.targetMonth === selectedMonth;
+    } else if (inc.frequency === 'monthly') {
+      // Ежемесячные показываем всегда
+      return true;
+    } else if (inc.frequency === 'weekly' || inc.frequency === 'biweekly') {
+      // Еженедельные и раз в две недели показываем всегда
+      return true;
+    }
+    return true;
+  };
+
+  // Фильтрация доходов по месяцу и статусу
+  const filteredIncome = income.filter(inc => {
+    if (!isIncomeInMonth(inc)) return false;
+    if (filter === 'received') return inc.received;
+    if (filter === 'unreceived') return !inc.received;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -65,7 +91,7 @@ export default function IncomeView() {
             </CardContent>
           </Card>
         ) : (
-          income.map((inc) => (
+          filteredIncome.map((inc) => (
             <Card key={inc.id} className="neon-card">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">

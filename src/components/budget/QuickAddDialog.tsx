@@ -241,7 +241,9 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
                 >
                   <option value="кредиты">💳 Кредиты</option>
                   <option value="коммунальные">💧 Коммунальные</option>
-                  <option value="питание">🍽️ Питание</option>
+                  <option value="домашние_траты">🏠 Домашние траты</option>
+                  <option value="здоровье">💊 Здоровье</option>
+                  <option value="автомобиль">🚗 Автомобиль</option>
                   <option value="прочее">📦 Прочее</option>
                   <option value="переводы">↔️ Переводы</option>
                 </select>

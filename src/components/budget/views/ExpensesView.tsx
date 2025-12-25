@@ -20,7 +20,9 @@ import type { ExpenseCategory } from '@/types/budget';
 const categoryIcons: Record<ExpenseCategory, any> = {
   кредиты: CreditCard,
   коммунальные: Droplet,
-  питание: Utensils,
+  домашние_траты: Utensils,
+  здоровье: MoreHorizontal,
+  автомобиль: MoreHorizontal,
   прочее: MoreHorizontal,
   переводы: ArrowLeftRight,
 };
@@ -28,21 +30,87 @@ const categoryIcons: Record<ExpenseCategory, any> = {
 const categoryColors: Record<ExpenseCategory, string> = {
   кредиты: 'text-purple-400',
   коммунальные: 'text-blue-400',
-  питание: 'text-orange-400',
+  домашние_траты: 'text-orange-400',
+  здоровье: 'text-green-400',
+  автомобиль: 'text-yellow-400',
   прочее: 'text-cyan-400',
-  переводы: 'text-yellow-400',
+  переводы: 'text-pink-400',
+};
+
+const categoryLabels: Record<ExpenseCategory, string> = {
+  кредиты: '💳 Кредиты',
+  коммунальные: '💧 Коммунальные',
+  домашние_траты: '🏠 Домашние траты',
+  здоровье: '💊 Здоровье',
+  автомобиль: '🚗 Автомобиль',
+  прочее: '📦 Прочее',
+  переводы: '↔️ Переводы',
+};
+
+const subcategoryLabels: Record<string, string> = {
+  // Коммунальные
+  электро: '⚡ Электричество',
+  газ: '🔥 Газ',
+  вода: '💧 Вода',
+  отопление: '🌡️ Отопление',
+  интернет: '🌐 Интернет',
+  тв: '📺 ТВ',
+  // Домашние траты
+  продукты: '🛒 Продукты',
+  бытовая_химия: '🧴 Бытовая химия',
+  косметика: '💄 Косметика',
+  ремонт: '🔨 Ремонт',
+  // Здоровье
+  аптека: '💊 Аптека',
+  клиника: '🏥 Клиника',
+  спорт: '🏋️ Спорт',
+  // Автомобиль
+  ремонт_авто: '🔧 Ремонт',
+  заправка: '⛽ Заправка',
+  обслуживание: '🔩 Обслуживание',
 };
 
 export default function ExpensesView() {
-  const { expenses, deleteExpense, toggleExpensePaid, addExpense, updateExpense } = useBudgetStore();
+  const { expenses, deleteExpense, toggleExpensePaid, addExpense, updateExpense, currentMonth } = useBudgetStore();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<any>(null);
   const [filter, setFilter] = React.useState<'all' | 'required' | 'optional'>('all');
+  const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
 
+  // Получаем выбранный месяц и год
+  const [selectedYear, selectedMonth] = currentMonth.split('-').map(Number);
+
+  // Функция для проверки, относится ли расход к выбранному месяцу
+  const isExpenseInMonth = (exp: any) => {
+    if (exp.frequency === 'once') {
+      // Для разовых - проверяем targetMonth и targetYear
+      return exp.targetYear === selectedYear && exp.targetMonth === selectedMonth;
+    } else if (exp.frequency === 'monthly') {
+      // Ежемесячные показываем всегда
+      return true;
+    } else if (exp.frequency === 'weekly' || exp.frequency === 'biweekly') {
+      // Еженедельные и раз в две недели показываем всегда
+      return true;
+    }
+    return true;
+  };
+
+  // Фильтрация расходов по месяцу, статусу и категории
   const filteredExpenses = expenses.filter(exp => {
-    if (filter === 'required') return exp.isRequired;
-    if (filter === 'optional') return !exp.isRequired;
+    // Фильтр по месяцу
+    if (!isExpenseInMonth(exp)) return false;
+    
+    // Фильтр по обязательности
+    if (filter === 'required') {
+      if (!exp.isRequired) return false;
+    } else if (filter === 'optional') {
+      if (exp.isRequired) return false;
+    }
+    
+    // Фильтр по категории
+    if (categoryFilter !== 'all' && exp.category !== categoryFilter) return false;
+    
     return true;
   });
 
@@ -161,7 +229,7 @@ export default function ExpensesView() {
                           {exp.isPaid ? 'Оплачено' : 'Не оплачено'}
                         </Badge>
                         <Badge variant="outline" className="border-cyan-500/30 text-cyan-500/60 min-w-[80px]">
-                          {exp.category}
+                          {categoryLabels[exp.category] || exp.category}
                         </Badge>
                         {exp.isRequired && (
                           <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
@@ -323,11 +391,15 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
         >
           <option value="кредиты">💳 Кредиты</option>
           <option value="коммунальные">💧 Коммунальные</option>
-          <option value="питание">🍔 Питание</option>
-          <option value="переводы">💸 Переводы</option>
-          <option value="прочее">📱 Прочее</option>
+          <option value="домашние_траты">🏠 Домашние траты</option>
+          <option value="здоровье">💊 Здоровье</option>
+          <option value="автомобиль">🚗 Автомобиль</option>
+          <option value="прочее">📦 Прочее</option>
+          <option value="переводы">↔️ Переводы</option>
         </select>
       </div>
+      
+      {/* Подкатегории для коммунальных */}
       {formData.category === 'коммунальные' && (
         <div>
           <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
@@ -341,8 +413,60 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
             <option value="газ">🔥 Газ</option>
             <option value="вода">💧 Вода</option>
             <option value="отопление">🌡️ Отопление</option>
-            <option value="интернет">📶 Интернет</option>
+            <option value="интернет">🌐 Интернет</option>
             <option value="тв">📺 ТВ</option>
+          </select>
+        </div>
+      )}
+      
+      {/* Подкатегории для домашних трат */}
+      {formData.category === 'домашние_траты' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">Без подкатегории</option>
+            <option value="продукты">🛒 Продукты</option>
+            <option value="бытовая_химия">🧴 Бытовая химия</option>
+            <option value="косметика">💄 Косметика</option>
+            <option value="ремонт">🔨 Ремонт</option>
+          </select>
+        </div>
+      )}
+      
+      {/* Подкатегории для здоровья */}
+      {formData.category === 'здоровье' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">Без подкатегории</option>
+            <option value="аптека">💊 Аптека</option>
+            <option value="клиника">🏥 Клиника</option>
+            <option value="спорт">🏋️ Спорт</option>
+          </select>
+        </div>
+      )}
+      
+      {/* Подкатегории для автомобиля */}
+      {formData.category === 'автомобиль' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">Без подкатегории</option>
+            <option value="ремонт_авто">🔧 Ремонт</option>
+            <option value="заправка">⛽ Заправка</option>
+            <option value="обслуживание">🔩 Обслуживание</option>
           </select>
         </div>
       )}

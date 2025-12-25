@@ -71,7 +71,7 @@ export async function GET(request: Request) {
           },
           {
             id: 'exp_3',
-            category: 'питание',
+            category: 'домашние_траты',
             name: 'Продукты',
             amount: 25000,
             dayOfMonth: null,
