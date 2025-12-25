@@ -97,22 +97,22 @@ export default function DashboardLayout() {
   };
 
   const handleManualSync = async () => {
-    const { syncToSupabase, isSyncing, income, expenses } = useBudgetStore.getState();
+    const { syncToSupabase, syncFromSupabase, isSyncing, income, expenses } = useBudgetStore.getState();
     
     if (isSyncing) {
       alert('Синхронизация уже выполняется...');
       return;
     }
 
-    const totalItems = income.length + expenses.length;
-    if (totalItems === 0) {
-      alert('Нет данных для синхронизации');
-      return;
-    }
-
     try {
+      // Сначала загружаем данные из Supabase (чтобы получить последние изменения с других устройств)
+      await syncFromSupabase();
+      
+      // Затем отправляем текущие данные в Supabase (чтобы сохранить локальные изменения)
       await syncToSupabase();
-      alert(`✅ Синхронизация завершена!\nДоходов: ${income.length}\nРасходов: ${expenses.length}`);
+      
+      const { income: updatedIncome, expenses: updatedExpenses } = useBudgetStore.getState();
+      alert(`✅ Синхронизация завершена!\nДоходов: ${updatedIncome.length}\nРасходов: ${updatedExpenses.length}`);
       console.log('Ручная синхронизация завершена успешно');
     } catch (error) {
       console.error('Ошибка синхронизации:', error);
