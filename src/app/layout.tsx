@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Домашняя бухгалтерия",
     description: "Управление личными финансами с прогнозированием кассовых разрывов",
-    url: "https://homeaccounting.vercel.app",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://homeaccounting.ru",
     siteName: "Домашняя бухгалтерия",
     type: "website",
   },
