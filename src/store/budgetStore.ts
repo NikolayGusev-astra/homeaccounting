@@ -599,8 +599,8 @@ export const useBudgetStore = create<BudgetStore>()(
               target_month: inc.targetMonth || null,
               target_year: inc.targetYear || null,
               notes: inc.notes || null,
-              is_transfer: inc.isTransfer || false,
-              transfer_type: inc.transferType || null,
+              is_transfer: inc.isTransfer ?? false,
+              transfer_type: inc.transferType ?? null,
             }));
 
             // Используем upsert для обновления или создания
@@ -628,13 +628,13 @@ export const useBudgetStore = create<BudgetStore>()(
               target_month: exp.targetMonth || null,
               target_year: exp.targetYear || null,
               notes: exp.notes || null,
-              is_transfer: exp.isTransfer || false,
-              transfer_type: exp.transferType || null,
+              is_transfer: exp.isTransfer ?? false,
+              transfer_type: exp.transferType ?? null,
             }));
 
             const { error: expensesError } = await supabase
               .from('expenses')
-              .upsert(expensesData, { onConflict: 'id' });
+              .upsert(expensesData);
 
             if (expensesError) {
               console.error('Error syncing expenses:', expensesError);
