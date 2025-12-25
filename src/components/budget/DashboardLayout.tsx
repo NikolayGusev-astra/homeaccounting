@@ -21,16 +21,22 @@ import {
   Moon,
   Sun,
   RefreshCw,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import DashboardView from './views/DashboardView';
 import IncomeView from './views/IncomeView';
 import ExpensesView from './views/ExpensesView';
 import AnalyticsView from './views/AnalyticsView';
+import { AuthDialog } from '@/components/auth/AuthDialog';
+import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 
 export default function DashboardLayout() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const { currentMonth, setCurrentMonth, getMonthlyForecast, settings, updateSettings } = useBudgetStore();
   const [isMounted, setIsMounted] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -121,12 +127,44 @@ export default function DashboardLayout() {
     document.documentElement.classList.toggle('dark', newTheme === 'dark-neon');
   };
 
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      console.error('Error signing out:', error);
+      alert('Ошибка при выходе');
+    } else {
+      setUser(null);
+    }
+  };
+
   // Initialize dark theme
   useEffect(() => {
     console.log('useEffect executed, adding dark class to document');
     if (typeof window !== 'undefined') {
       document.documentElement.classList.add('dark');
     }
+  }, []);
+
+  // Проверка авторизации
+  useEffect(() => {
+    if (!supabase) return;
+
+    // Проверка текущей сессии
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Подписка на изменения авторизации
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session) {
+        setAuthDialogOpen(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const renderView = () => {
@@ -207,6 +245,9 @@ export default function DashboardLayout() {
             toggleTheme={toggleTheme}
             settings={settings}
             handleManualSync={handleManualSync}
+            user={user}
+            onSignIn={() => setAuthDialogOpen(true)}
+            onSignOut={handleSignOut}
           />
         </aside>
 
@@ -275,6 +316,9 @@ export default function DashboardLayout() {
           </footer>
         </main>
       </div>
+
+      {/* Auth Dialog */}
+      <AuthDialog open={authDialogOpen} onOpenChange={setAuthDialogOpen} />
     </div>
   );
 }
@@ -288,6 +332,9 @@ interface NavContentProps {
   toggleTheme: () => void;
   handleManualSync?: () => void;
   settings: any;
+  user?: any;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
   mobile?: boolean;
 }
 
@@ -300,6 +347,9 @@ function NavContent({
   toggleTheme,
   handleManualSync,
   settings,
+  user,
+  onSignIn,
+  onSignOut,
   mobile = false
 }: NavContentProps) {
   return (

@@ -10,7 +10,7 @@ import type {
   CashGap,
   CategoryStats,
 } from '@/types/budget';
-import { supabase, getCurrentUserId, isSupabaseEnabled } from '@/lib/supabase';
+import { supabase, getCurrentUserId, getCurrentUserIdSync, isSupabaseEnabled } from '@/lib/supabase';
 
 interface BudgetStore {
   // Data
@@ -347,7 +347,8 @@ export const useBudgetStore = create<BudgetStore>()(
         }));
         // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled() && supabase) {
-          const userId = getCurrentUserId();
+          // Используем синхронную версию для быстрой операции
+          const userId = getCurrentUserIdSync();
           if (userId) {
             supabase.from('income').delete().eq('id', id).eq('user_id', userId).catch(console.error);
           }
@@ -421,7 +422,8 @@ export const useBudgetStore = create<BudgetStore>()(
         }));
         // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled() && supabase) {
-          const userId = getCurrentUserId();
+          // Используем синхронную версию для быстрой операции
+          const userId = getCurrentUserIdSync();
           if (userId) {
             supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);
           }
@@ -517,7 +519,7 @@ export const useBudgetStore = create<BudgetStore>()(
           return;
         }
 
-        const userId = getCurrentUserId();
+        const userId = await getCurrentUserId();
         if (!userId) {
           console.warn('No user ID, skipping sync');
           return;
@@ -592,7 +594,7 @@ export const useBudgetStore = create<BudgetStore>()(
           return;
         }
 
-        const userId = getCurrentUserId();
+        const userId = await getCurrentUserId();
         if (!userId) {
           console.warn('No user ID, skipping sync');
           return;

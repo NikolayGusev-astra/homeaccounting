@@ -11,21 +11,87 @@ export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null
 
-// Получить текущего пользователя (для MVP используем localStorage)
-export function getCurrentUserId(): string | null {
+// Получить текущего пользователя через Supabase Auth (async)
+export async function getCurrentUserId(): Promise<string | null> {
+  if (!supabase) return getCurrentUserIdSync()
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    if (error || !user) {
+      // Fallback на localStorage для обратной совместимости
+      return getCurrentUserIdSync()
+    }
+    
+    return user.id
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    // Fallback на localStorage
+    return getCurrentUserIdSync()
+  }
+}
+
+// Синхронная версия (для обратной совместимости)
+export function getCurrentUserIdSync(): string | null {
   if (typeof window === 'undefined') return null
   
-  // Для MVP: используем localStorage
-  // Для production: использовать Supabase Auth
-  let userId = localStorage.getItem('supabase_user_id')
-  
-  if (!userId) {
-    // Генерируем временный ID для анонимного пользователя
-    userId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-    localStorage.setItem('supabase_user_id', userId)
+  // Пытаемся получить из сессии (если уже загружена)
+  if (supabase) {
+    const session = supabase.auth.session
+    if (session?.user) {
+      return session.user.id
+    }
   }
   
-  return userId
+  // Fallback на localStorage
+  return localStorage.getItem('supabase_user_id')
+}
+
+// OAuth функции
+export async function signInWithGoogle() {
+  if (!supabase) {
+    throw new Error('Supabase not configured')
+  }
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`
+    }
+  })
+  
+  return { data, error }
+}
+
+export async function signInWithGitHub() {
+  if (!supabase) {
+    throw new Error('Supabase not configured')
+  }
+  
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'github',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`
+    }
+  })
+  
+  return { data, error }
+}
+
+export async function signOut() {
+  if (!supabase) {
+    throw new Error('Supabase not configured')
+  }
+  
+  const { error } = await supabase.auth.signOut()
+  return { error }
+}
+
+export async function getCurrentUser() {
+  if (!supabase) return { user: null, error: null }
+  
+  const { data: { user }, error } = await supabase.auth.getUser()
+  return { user, error }
 }
 
 // Проверка доступности Supabase
