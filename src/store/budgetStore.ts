@@ -116,17 +116,19 @@ const calculateForecast = (
   // Calculate expense occurrences
   expenses.forEach(exp => {
     const occurrences: number[] = [];
+    // По умолчанию считаем monthly, если frequency не установлен
+    const frequency = exp.frequency || 'monthly';
 
-    if (exp.frequency === 'once') {
+    if (frequency === 'once') {
       // Only if target month/year matches current
       if (exp.targetYear === year && exp.targetMonth === month && exp.dayOfMonth) {
         occurrences.push(exp.dayOfMonth);
       }
-    } else if (exp.frequency === 'monthly') {
+    } else if (frequency === 'monthly') {
       if (exp.dayOfMonth) {
         occurrences.push(exp.dayOfMonth);
       }
-    } else if (exp.frequency === 'weekly') {
+    } else if (frequency === 'weekly') {
       // Every 7 days starting from dayOfMonth (default to day 1 if not set)
       const baseDay = exp.dayOfMonth || 1;
       for (let i = 0; i < 5; i++) {
@@ -134,7 +136,7 @@ const calculateForecast = (
         if (occurrenceDay > daysInMonth) break;
         occurrences.push(occurrenceDay);
       }
-    } else if (exp.frequency === 'biweekly') {
+    } else if (frequency === 'biweekly') {
       // Every 14 days starting from dayOfMonth (default to day 1 if not set)
       const baseDay = exp.dayOfMonth || 1;
       for (let i = 0; i < 3; i++) {
@@ -282,9 +284,17 @@ const getTotalExpenses = (
   year: number,
   month: number
 ): number => {
+  // Считаем все расходы, которые должны быть в этом месяце
+  // Для monthly/weekly/biweekly - всегда учитываем
+  // Для once - только если targetYear и targetMonth совпадают
   const monthlyExpenses = expenses.filter(exp => {
-    const expenseDate = new Date(exp.createdAt);
-    return expenseDate.getFullYear() === year && expenseDate.getMonth() + 1 === month;
+    if (exp.frequency === 'once') {
+      // Разовые расходы - только если целевой месяц совпадает
+      return exp.targetYear === year && exp.targetMonth === month;
+    } else {
+      // Периодические расходы - всегда учитываем в текущем месяце
+      return true;
+    }
   });
 
   return monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
