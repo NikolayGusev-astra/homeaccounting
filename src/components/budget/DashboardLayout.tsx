@@ -91,7 +91,7 @@ export default function DashboardLayout() {
         const data = JSON.parse(event.target?.result as string);
         console.log('Data parsed successfully:', data);
         useBudgetStore.getState().importData(data);
-        alert('Данные успешно импортированы!');
+        alert(t('message.dataImported'));
       } catch (error) {
         console.error('Error parsing JSON:', error);
         alert('Ошибка при импорте данных');
@@ -116,11 +116,11 @@ export default function DashboardLayout() {
       await syncToSupabase();
       
       const { income: updatedIncome, expenses: updatedExpenses } = useBudgetStore.getState();
-      alert(`✅ Синхронизация завершена!\nДоходов: ${updatedIncome.length}\nРасходов: ${updatedExpenses.length}`);
+      alert(`${t('message.syncSuccess')}\n${t('nav.income')}: ${updatedIncome.length}\n${t('nav.expenses')}: ${updatedExpenses.length}`);
       console.log('Ручная синхронизация завершена успешно');
     } catch (error) {
       console.error('Ошибка синхронизации:', error);
-      alert(`❌ Ошибка синхронизации: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      alert(`${t('message.syncError')}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -129,7 +129,7 @@ export default function DashboardLayout() {
     const { error } = await signOut();
     if (error) {
       console.error('Error signing out:', error);
-      alert('Ошибка при выходе');
+      alert(t('message.syncError'));
     } else {
       setUser(null);
     }

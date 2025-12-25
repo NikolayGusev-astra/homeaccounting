@@ -267,6 +267,7 @@ const translations: Record<Language, Record<string, string>> = {
     'message.dataExported': 'Данные успешно экспортированы',
     'message.dataImported': 'Данные успешно импортированы',
     'message.deleteConfirm': 'Удалить этот элемент?',
+    'message.signOutError': 'Ошибка при выходе',
   },
 };
 
