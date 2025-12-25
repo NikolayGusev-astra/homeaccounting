@@ -51,3 +51,5 @@ server.log
 # documentation and screenshots
 docs/
 screenshots/
+# OAuth credentials (секретные данные)
+docs/oauth-credentials.md
