@@ -225,6 +225,11 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
               return
             }
 
+            // Сохраняем device_id для использования в callback
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('vk_device_id', deviceId)
+            }
+
             // Обмениваем code на токен
             VKID.Auth.exchangeCode(code, deviceId)
               .then((data: any) => {
