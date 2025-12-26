@@ -63,6 +63,7 @@ export default function DashboardLayout() {
 
   // Move navigation creation to useMemo to avoid SSR issues
   // t() is now safe for SSR (returns default 'en' language during server-side rendering)
+  // Include language in dependencies to update navigation when language changes
   const navigation = React.useMemo(() => {
     return [
       { id: 'dashboard' as ViewMode, label: t('nav.dashboard'), icon: LayoutDashboard },
@@ -70,7 +71,7 @@ export default function DashboardLayout() {
       { id: 'expenses' as ViewMode, label: t('nav.expenses'), icon: CreditCard },
       { id: 'analytics' as ViewMode, label: t('nav.analytics'), icon: BarChart3 },
     ];
-  }, []);
+  }, [language]);
 
   const handleExport = () => {
     console.log('Export button clicked');
@@ -261,15 +262,17 @@ export default function DashboardLayout() {
                 currentView={currentView}
                 setCurrentView={setCurrentView}
                 navigation={navigation}
-                  handleExport={handleExport}
-                  handleImport={handleImport}
-                  settings={settings}
-                  handleManualSync={handleManualSync}
-                  user={user}
-                  onSignIn={() => setAuthDialogOpen(true)}
-                  onSignOut={handleSignOut}
-                  mobile
-                />
+                handleExport={handleExport}
+                handleImport={handleImport}
+                settings={settings}
+                handleManualSync={handleManualSync}
+                user={user}
+                onSignIn={() => setAuthDialogOpen(true)}
+                onSignOut={handleSignOut}
+                mobile
+                language={language}
+                changeLanguage={changeLanguage}
+              />
             </SheetContent>
           </Sheet>
           <h1 className="text-lg font-bold text-cyan-400 neon-text-cyan">
@@ -295,14 +298,16 @@ export default function DashboardLayout() {
             currentView={currentView}
             setCurrentView={setCurrentView}
             navigation={navigation}
-                  handleExport={handleExport}
-                  handleImport={handleImport}
-                  settings={settings}
-                  handleManualSync={handleManualSync}
-                  user={user}
-                  onSignIn={() => setAuthDialogOpen(true)}
-                  onSignOut={handleSignOut}
-                />
+            handleExport={handleExport}
+            handleImport={handleImport}
+            settings={settings}
+            handleManualSync={handleManualSync}
+            user={user}
+            onSignIn={() => setAuthDialogOpen(true)}
+            onSignOut={handleSignOut}
+            language={language}
+            changeLanguage={changeLanguage}
+          />
         </aside>
 
         {/* Main Content */}
@@ -398,6 +403,8 @@ interface NavContentProps {
   onSignIn?: () => void;
   onSignOut?: () => void;
   mobile?: boolean;
+  language?: 'ru' | 'en';
+  changeLanguage?: (lang: 'ru' | 'en') => void;
 }
 
 function NavContent({
@@ -411,8 +418,14 @@ function NavContent({
   user,
   onSignIn,
   onSignOut,
-  mobile = false
+  mobile = false,
+  language: languageProp,
+  changeLanguage: changeLanguageProp
 }: NavContentProps) {
+  // Use useTranslation hook if language is not provided as prop
+  const translationHook = useTranslation();
+  const language = languageProp || translationHook.language;
+  const changeLanguage = changeLanguageProp || translationHook.setLanguage;
   return (
     <div className="flex-1 flex flex-col p-4 space-y-6 overflow-y-auto neon-scrollbar">
       {/* Navigation */}
