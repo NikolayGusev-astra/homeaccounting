@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import type { ExpenseCategory } from '@/types/budget';
+import { t, useTranslation } from '@/lib/i18n';
 
 const categoryIcons: Record<ExpenseCategory, any> = {
   кредиты: CreditCard,
@@ -37,46 +38,56 @@ const categoryColors: Record<ExpenseCategory, string> = {
   переводы: 'text-pink-400',
 };
 
-const categoryLabels: Record<ExpenseCategory, string> = {
-  кредиты: '💳 Кредиты',
-  коммунальные: '💧 Коммунальные',
-  домашние_траты: '🏠 Домашние траты',
-  здоровье: '💊 Здоровье',
-  автомобиль: '🚗 Автомобиль',
-  прочее: '📦 Прочее',
-  переводы: '↔️ Переводы',
+// Category labels will be translated dynamically using t()
+const getCategoryLabel = (category: ExpenseCategory): string => {
+  const categoryKeyMap: Record<ExpenseCategory, string> = {
+    кредиты: 'category.credits',
+    коммунальные: 'category.utilities',
+    домашние_траты: 'category.home',
+    здоровье: 'category.health',
+    автомобиль: 'category.car',
+    прочее: 'category.other',
+    переводы: 'category.transfers',
+  };
+  return t(categoryKeyMap[category]);
 };
 
-const subcategoryLabels: Record<string, string> = {
-  // Коммунальные
-  электро: '⚡ Электричество',
-  газ: '🔥 Газ',
-  вода: '💧 Вода',
-  отопление: '🌡️ Отопление',
-  интернет: '🌐 Интернет',
-  тв: '📺 ТВ',
-  // Домашние траты
-  продукты: '🛒 Продукты',
-  бытовая_химия: '🧴 Бытовая химия',
-  косметика: '💄 Косметика',
-  ремонт: '🔨 Ремонт',
-  // Здоровье
-  аптека: '💊 Аптека',
-  клиника: '🏥 Клиника',
-  спорт: '🏋️ Спорт',
-  // Автомобиль
-  ремонт_авто: '🔧 Ремонт',
-  заправка: '⛽ Заправка',
-  обслуживание: '🔩 Обслуживание',
+// Subcategory labels will be translated dynamically using t()
+const getSubcategoryLabel = (subcategory: string): string => {
+  const subcategoryKeyMap: Record<string, string> = {
+    электро: 'subcategory.electricity',
+    газ: 'subcategory.gas',
+    вода: 'subcategory.water',
+    отопление: 'subcategory.heating',
+    интернет: 'subcategory.internet',
+    тв: 'subcategory.tv',
+    продукты: 'subcategory.groceries',
+    бытовая_химия: 'subcategory.household',
+    косметика: 'subcategory.cosmetics',
+    ремонт: 'subcategory.repair',
+    аптека: 'subcategory.pharmacy',
+    клиника: 'subcategory.clinic',
+    спорт: 'subcategory.sport',
+    ремонт_авто: 'subcategory.carRepair',
+    заправка: 'subcategory.gasStation',
+    обслуживание: 'subcategory.carService',
+  };
+  return t(subcategoryKeyMap[subcategory] || subcategory);
 };
 
 export default function ExpensesView() {
   const { expenses, deleteExpense, toggleExpensePaid, addExpense, updateExpense, currentMonth } = useBudgetStore();
+  const { language } = useTranslation();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingExpense, setEditingExpense] = React.useState<any>(null);
   const [filter, setFilter] = React.useState<'all' | 'required' | 'optional'>('all');
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
+  
+  // Force re-render on language change
+  React.useEffect(() => {
+    // This will trigger re-render when language changes
+  }, [language]);
 
   // Получаем выбранный месяц и год с проверкой
   const { selectedYear, selectedMonth } = React.useMemo(() => {
@@ -156,24 +167,24 @@ export default function ExpensesView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-pink-400 neon-text-pink">
-            Расходы
+            {t('expenses.title')}
           </h2>
           <p className="text-sm text-pink-500/60 mt-1">
-            Управление обязательными и необязательными платежами
+            {t('expenses.subtitle')}
           </p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="neon-button">
               <Plus className="h-4 w-4 mr-2" />
-              Добавить расход
+              {t('expenses.add')}
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-[#0d0d14] border-pink-500/30 max-w-lg">
             <DialogHeader>
-              <DialogTitle className="text-pink-400">Добавить расход</DialogTitle>
+              <DialogTitle className="text-pink-400">{t('expenses.add')}</DialogTitle>
               <DialogDescription className="text-pink-500/60">
-                Заполните форму для добавления нового расхода
+                {t('expenses.subtitle')}
               </DialogDescription>
             </DialogHeader>
             <ExpenseForm
@@ -191,7 +202,7 @@ export default function ExpensesView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-pink-500/60">
-              Обязательные платежи
+              {t('expenses.totalRequired')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -203,7 +214,7 @@ export default function ExpensesView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-pink-500/60">
-              Необязательные расходы
+              {t('expenses.totalOptional')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -220,21 +231,21 @@ export default function ExpensesView() {
           onClick={() => setFilter('all')}
           className={filter === 'all' ? 'bg-pink-500/20 text-pink-400 border-pink-500/50' : 'text-pink-500/60 hover:bg-pink-500/10'}
         >
-          Все
+          {t('expenses.filter.all')}
         </Button>
         <Button
           variant={filter === 'required' ? 'default' : 'ghost'}
           onClick={() => setFilter('required')}
           className={filter === 'required' ? 'bg-pink-500/20 text-pink-400 border-pink-500/50' : 'text-pink-500/60 hover:bg-pink-500/10'}
         >
-          Обязательные
+          {t('expenses.filter.required')}
         </Button>
         <Button
           variant={filter === 'optional' ? 'default' : 'ghost'}
           onClick={() => setFilter('optional')}
           className={filter === 'optional' ? 'bg-pink-500/20 text-pink-400 border-pink-500/50' : 'text-pink-500/60 hover:bg-pink-500/10'}
         >
-          Необязательные
+          {t('expenses.filter.optional')}
         </Button>
       </div>
 
@@ -242,7 +253,7 @@ export default function ExpensesView() {
         {filteredExpenses.length === 0 ? (
           <Card className="neon-card">
             <CardContent className="p-12 text-center">
-              <p className="text-pink-500/60">Нет добавленных расходов</p>
+              <p className="text-pink-500/60">{t('expenses.empty')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -260,27 +271,27 @@ export default function ExpensesView() {
                           variant={exp.isPaid ? "default" : "secondary"}
                           className={exp.isPaid ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-pink-500/20 text-pink-400 border-pink-500/30"}
                         >
-                          {exp.isPaid ? 'Оплачено' : 'Не оплачено'}
+                          {exp.isPaid ? t('expenses.isPaid') : t('expenses.notPaid')}
                         </Badge>
                         <Badge variant="outline" className="border-cyan-500/30 text-cyan-500/60 min-w-[80px]">
-                          {categoryLabels[exp.category] || exp.category}
+                          {getCategoryLabel(exp.category)}
                         </Badge>
                         {exp.subcategory && (
                           <Badge variant="outline" className="text-xs bg-pink-500/10 text-pink-400 border-pink-500/30">
-                            {subcategoryLabels[exp.subcategory] || exp.subcategory}
+                            {getSubcategoryLabel(exp.subcategory)}
                           </Badge>
                         )}
                         {exp.isRequired && (
                           <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-                            Обязательно
+                            {t('expenses.required')}
                           </Badge>
                         )}
                         {exp.frequency && (
                           <Badge variant="outline" className="border-cyan-500/30 text-cyan-500/60 min-w-[80px]">
-                            {exp.frequency === 'monthly' ? 'Ежемесячно' :
-                             exp.frequency === 'weekly' ? 'Еженедельно' :
-                             exp.frequency === 'biweekly' ? 'Раз в 2 недели' :
-                             exp.frequency === 'once' ? 'Разово' : 'Ежемесячно'}
+                            {exp.frequency === 'monthly' ? t('income.frequency.monthly') :
+                             exp.frequency === 'weekly' ? t('income.frequency.weekly') :
+                             exp.frequency === 'biweekly' ? t('income.frequency.biweekly') :
+                             exp.frequency === 'once' ? t('income.frequency.once') : t('income.frequency.monthly')}
                           </Badge>
                         )}
                         {exp.isTransfer && (
@@ -297,7 +308,7 @@ export default function ExpensesView() {
                       <div className="space-y-1">
                         {exp.dayOfMonth && (
                           <p className="text-sm text-cyan-500/60">
-                            День платежа: <span className="text-cyan-400 font-medium">{exp.dayOfMonth} числа</span>
+                            {t('expenses.dayOfMonth')}: <span className="text-cyan-400 font-medium">{exp.dayOfMonth}</span>
                           </p>
                         )}
                         <p className="text-2xl font-bold text-pink-400 neon-text-pink">
@@ -348,9 +359,9 @@ export default function ExpensesView() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="bg-[#0d0d14] border-pink-500/30 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-pink-400">Редактировать расход</DialogTitle>
+            <DialogTitle className="text-pink-400">{t('expenses.edit')}</DialogTitle>
             <DialogDescription className="text-pink-500/60">
-              Измените данные расхода
+              {t('expenses.subtitle')}
             </DialogDescription>
           </DialogHeader>
           <ExpenseForm
@@ -378,6 +389,13 @@ interface ExpenseFormProps {
 }
 
 function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
+  const { language } = useTranslation();
+  
+  // Force re-render on language change
+  React.useEffect(() => {
+    // This will trigger re-render when language changes
+  }, [language]);
+  
   const [formData, setFormData] = React.useState({
     category: initialData?.category || 'кредиты' as ExpenseCategory,
     subcategory: initialData?.subcategory || '',
@@ -422,38 +440,38 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">Категория</label>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.category')}</label>
         <select
           value={formData.category}
           onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
         >
-          <option value="кредиты">💳 Кредиты</option>
-          <option value="коммунальные">💧 Коммунальные</option>
-          <option value="домашние_траты">🏠 Домашние траты</option>
-          <option value="здоровье">💊 Здоровье</option>
-          <option value="автомобиль">🚗 Автомобиль</option>
-          <option value="прочее">📦 Прочее</option>
-          <option value="переводы">↔️ Переводы</option>
+          <option value="кредиты">{t('category.credits')}</option>
+          <option value="коммунальные">{t('category.utilities')}</option>
+          <option value="домашние_траты">{t('category.home')}</option>
+          <option value="здоровье">{t('category.health')}</option>
+          <option value="автомобиль">{t('category.car')}</option>
+          <option value="прочее">{t('category.other')}</option>
+          <option value="переводы">{t('category.transfers')}</option>
         </select>
       </div>
       
       {/* Подкатегории для коммунальных */}
       {formData.category === 'коммунальные' && (
         <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
           <select
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
             className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
           >
-            <option value="">Без подкатегории</option>
-            <option value="электро">⚡ Электроэнергия</option>
-            <option value="газ">🔥 Газ</option>
-            <option value="вода">💧 Вода</option>
-            <option value="отопление">🌡️ Отопление</option>
-            <option value="интернет">🌐 Интернет</option>
-            <option value="тв">📺 ТВ</option>
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="электро">{t('subcategory.electricity')}</option>
+            <option value="газ">{t('subcategory.gas')}</option>
+            <option value="вода">{t('subcategory.water')}</option>
+            <option value="отопление">{t('subcategory.heating')}</option>
+            <option value="интернет">{t('subcategory.internet')}</option>
+            <option value="тв">{t('subcategory.tv')}</option>
           </select>
         </div>
       )}
@@ -461,17 +479,17 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
       {/* Подкатегории для домашних трат */}
       {formData.category === 'домашние_траты' && (
         <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
           <select
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
             className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
           >
-            <option value="">Без подкатегории</option>
-            <option value="продукты">🛒 Продукты</option>
-            <option value="бытовая_химия">🧴 Бытовая химия</option>
-            <option value="косметика">💄 Косметика</option>
-            <option value="ремонт">🔨 Ремонт</option>
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="продукты">{t('subcategory.groceries')}</option>
+            <option value="бытовая_химия">{t('subcategory.household')}</option>
+            <option value="косметика">{t('subcategory.cosmetics')}</option>
+            <option value="ремонт">{t('subcategory.repair')}</option>
           </select>
         </div>
       )}
@@ -479,16 +497,16 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
       {/* Подкатегории для здоровья */}
       {formData.category === 'здоровье' && (
         <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
           <select
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
             className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
           >
-            <option value="">Без подкатегории</option>
-            <option value="аптека">💊 Аптека</option>
-            <option value="клиника">🏥 Клиника</option>
-            <option value="спорт">🏋️ Спорт</option>
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="аптека">{t('subcategory.pharmacy')}</option>
+            <option value="клиника">{t('subcategory.clinic')}</option>
+            <option value="спорт">{t('subcategory.sport')}</option>
           </select>
         </div>
       )}
@@ -496,50 +514,50 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
       {/* Подкатегории для автомобиля */}
       {formData.category === 'автомобиль' && (
         <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">Подкатегория</label>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
           <select
             value={formData.subcategory}
             onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
             className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
           >
-            <option value="">Без подкатегории</option>
-            <option value="ремонт_авто">🔧 Ремонт</option>
-            <option value="заправка">⛽ Заправка</option>
-            <option value="обслуживание">🔩 Обслуживание</option>
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="ремонт_авто">{t('subcategory.carRepair')}</option>
+            <option value="заправка">{t('subcategory.gasStation')}</option>
+            <option value="обслуживание">{t('subcategory.carService')}</option>
           </select>
         </div>
       )}
       {formData.category === 'переводы' && (
         <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">Тип перевода</label>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.transferType')}</label>
           <select
             value={formData.transferType}
             onChange={(e) => setFormData({ ...formData, transferType: e.target.value as 'sent' | 'received' })}
             className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
           >
-            <option value="sent">💸 Отправленный перевод (расход)</option>
-            <option value="received">💰 Полученный перевод (будет в доходах)</option>
+            <option value="sent">{t('expenses.transfer.sent')}</option>
+            <option value="received">{t('expenses.transfer.received')}</option>
           </select>
           <p className="text-xs text-pink-500/60 mt-1">
             {formData.transferType === 'sent' 
-              ? 'Отправленный перевод учитывается как расход'
-              : 'Полученный перевод будет автоматически добавлен в доходы'}
+              ? t('expenses.transfer.sentDesc')
+              : t('expenses.transfer.receivedDesc')}
           </p>
         </div>
       )}
       <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">Название</label>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.name')}</label>
         <input
           type="text"
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          placeholder="Кредит в Сбербанке, Электроэнергия и т.д."
+          placeholder={t('expenses.name')}
         />
       </div>
       <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">Сумма (₽)</label>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.amount')}</label>
         <input
           type="number"
           required
@@ -552,7 +570,7 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
         />
       </div>
       <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">День платежа</label>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.dayOfMonth')}</label>
         <input
           type="number"
           min="1"
@@ -560,7 +578,7 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
           value={formData.dayOfMonth}
           onChange={(e) => setFormData({ ...formData, dayOfMonth: e.target.value })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          placeholder="15 (оставьте пустым для без конкретной даты)"
+          placeholder="15"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -572,26 +590,26 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
           className="w-4 h-4 accent-pink-500"
         />
         <label htmlFor="isRequired" className="text-sm text-pink-400">
-          Обязательный платеж
+          {t('expenses.isRequired')}
         </label>
       </div>
       <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">Периодичность</label>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.frequency')}</label>
         <select
           value={formData.frequency}
           onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
         >
-          <option value="monthly">Ежемесячно</option>
-          <option value="weekly">Еженедельно</option>
-          <option value="biweekly">Раз в 2 недели</option>
-          <option value="once">Разово</option>
+          <option value="monthly">{t('income.frequency.monthly')}</option>
+          <option value="weekly">{t('income.frequency.weekly')}</option>
+          <option value="biweekly">{t('income.frequency.biweekly')}</option>
+          <option value="once">{t('income.frequency.once')}</option>
         </select>
       </div>
       {formData.frequency === 'once' && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-pink-400 mb-2 block">Целевой месяц</label>
+            <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.targetMonth')}</label>
             <input
               type="number"
               min="1"
@@ -603,7 +621,7 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-pink-400 mb-2 block">Год</label>
+            <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.year')}</label>
             <input
               type="number"
               min="2024"
@@ -617,13 +635,13 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
         </div>
       )}
       <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">Примечание (необязательно)</label>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.notesOptional')}</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input resize-none"
           rows={2}
-          placeholder="Дополнительная информация"
+          placeholder={t('income.notesPlaceholder')}
         />
       </div>
       <div className="flex gap-2 pt-4">
@@ -631,7 +649,7 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
           type="submit"
           className="flex-1 neon-button"
         >
-          Сохранить
+          {t('common.save')}
         </Button>
         <Button
           type="button"
@@ -639,7 +657,7 @@ function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
           onClick={onCancel}
           className="text-pink-400 hover:bg-pink-500/10"
         >
-          Отмена
+          {t('common.cancel')}
         </Button>
       </div>
     </form>

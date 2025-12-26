@@ -21,6 +21,7 @@ import {
   RefreshCw,
   LogIn,
   LogOut,
+  Languages,
 } from 'lucide-react';
 import DashboardView from './views/DashboardView';
 import IncomeView from './views/IncomeView';
@@ -29,7 +30,7 @@ import AnalyticsView from './views/AnalyticsView';
 import { AuthDialog } from '@/components/auth/AuthDialog';
 import { QuickAddDialog } from './QuickAddDialog';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
-import { t } from '@/lib/i18n';
+import { t, useTranslation, setLanguage, getLanguage } from '@/lib/i18n';
 
 export default function DashboardLayout() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
@@ -38,6 +39,8 @@ export default function DashboardLayout() {
   const [user, setUser] = useState<any>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quickAddDialogOpen, setQuickAddDialogOpen] = useState(false);
+  const { language, setLanguage: changeLanguage } = useTranslation();
+  const [forceUpdate, setForceUpdate] = useState(0);
   
   // Long press handler для мобильных устройств
   const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -99,17 +102,17 @@ export default function DashboardLayout() {
         alert(t('message.dataImported'));
       } catch (error) {
         console.error('Error parsing JSON:', error);
-        alert('Ошибка при импорте данных');
+        alert(t('message.importError'));
       }
     };
     reader.readAsText(file);
   };
 
   const handleManualSync = async () => {
-    const { syncToSupabase, syncFromSupabase, isSyncing, income, expenses } = useBudgetStore.getState();
+    const { syncToSupabase, syncFromSupabase, isSyncing } = useBudgetStore.getState();
     
     if (isSyncing) {
-      alert('Синхронизация уже выполняется...');
+      alert(t('message.syncInProgress'));
       return;
     }
 
@@ -122,9 +125,9 @@ export default function DashboardLayout() {
       
       const { income: updatedIncome, expenses: updatedExpenses } = useBudgetStore.getState();
       alert(`${t('message.syncSuccess')}\n${t('nav.income')}: ${updatedIncome.length}\n${t('nav.expenses')}: ${updatedExpenses.length}`);
-      console.log('Ручная синхронизация завершена успешно');
+      console.log('Manual sync completed successfully');
     } catch (error) {
-      console.error('Ошибка синхронизации:', error);
+      console.error('Sync error:', error);
       alert(`${t('message.syncError')}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -145,6 +148,13 @@ export default function DashboardLayout() {
     console.log('useEffect executed, adding dark class to document');
     if (typeof window !== 'undefined') {
       document.documentElement.classList.add('dark');
+      
+      // Listen for language changes
+      const handleLanguageChange = () => {
+        setForceUpdate(prev => prev + 1);
+      };
+      window.addEventListener('languagechange', handleLanguageChange);
+      return () => window.removeEventListener('languagechange', handleLanguageChange);
     }
   }, []);
 
@@ -437,7 +447,7 @@ function NavContent({
       {!mobile && (
         <div className="space-y-2 pt-4 border-t border-cyan-500/20">
           <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
-            Данные
+            {t('common.data')}
           </p>
           <Button
             variant="ghost"
@@ -445,7 +455,7 @@ function NavContent({
             className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
           >
             <Download className="h-4 w-4 mr-2" />
-            Экспорт
+            {t('common.export')}
           </Button>
           <label className="w-full">
             <Button
@@ -455,7 +465,7 @@ function NavContent({
             >
               <span>
                 <Upload className="h-4 w-4 mr-2" />
-                Импорт
+                {t('common.import')}
               </span>
             </Button>
             <input
@@ -472,9 +482,30 @@ function NavContent({
               className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Ручная синхронизация
+              {t('common.sync')}
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Language Switcher - Desktop */}
+      {!mobile && (
+        <div className="space-y-2 pt-4 border-t border-cyan-500/20">
+          <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
+            {t('common.language')}
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const newLang = language === 'ru' ? 'en' : 'ru';
+              changeLanguage(newLang);
+            }}
+            className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
+          >
+            <Languages className="h-4 w-4 mr-2" />
+            <span className="mr-2">{language === 'ru' ? '🇷🇺' : '🇬🇧'}</span>
+            {language === 'ru' ? t('common.language.en') : t('common.language.ru')}
+          </Button>
         </div>
       )}
 
@@ -482,12 +513,12 @@ function NavContent({
       {!mobile && (
         <div className="space-y-2 pt-4 border-t border-cyan-500/20">
           <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
-            Аккаунт
+            {t('common.account')}
           </p>
           {user ? (
             <>
               <div className="px-4 py-2 text-sm text-cyan-400">
-                {user.email || 'Пользователь'}
+                {user.email || t('common.user')}
               </div>
               {onSignOut && (
                 <Button
@@ -496,7 +527,7 @@ function NavContent({
                   className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Выйти
+                  {t('common.signOut')}
                 </Button>
               )}
             </>
@@ -508,10 +539,31 @@ function NavContent({
                 className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
               >
                 <LogIn className="h-4 w-4 mr-2" />
-                Войти
+                {t('common.signIn')}
               </Button>
             )
           )}
+        </div>
+      )}
+
+      {/* Mobile Language Switcher */}
+      {mobile && (
+        <div className="pt-4 border-t border-cyan-500/20">
+          <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider mb-2">
+            {t('common.language')}
+          </p>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              const newLang = language === 'ru' ? 'en' : 'ru';
+              changeLanguage(newLang);
+            }}
+            className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
+          >
+            <Languages className="h-4 w-4 mr-2" />
+            <span className="mr-2">{language === 'ru' ? '🇷🇺' : '🇬🇧'}</span>
+            {language === 'ru' ? t('common.language.en') : t('common.language.ru')}
+          </Button>
         </div>
       )}
 
@@ -519,7 +571,7 @@ function NavContent({
       {mobile && (
         <div className="space-y-2 pt-4 border-t border-cyan-500/20">
           <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
-            Данные
+            {t('common.data')}
           </p>
           <Button
             variant="ghost"
@@ -527,7 +579,7 @@ function NavContent({
             className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
           >
             <Download className="h-4 w-4 mr-2" />
-            Экспорт
+            {t('common.export')}
           </Button>
           <label className="w-full">
             <Button
@@ -537,7 +589,7 @@ function NavContent({
             >
               <span>
                 <Upload className="h-4 w-4 mr-2" />
-                Импорт
+                {t('common.import')}
               </span>
             </Button>
             <input
@@ -554,7 +606,7 @@ function NavContent({
               className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Ручная синхронизация
+              {t('common.sync')}
             </Button>
           )}
         </div>
@@ -564,12 +616,12 @@ function NavContent({
       {mobile && (
         <div className="space-y-2 pt-4 border-t border-cyan-500/20">
           <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
-            Аккаунт
+            {t('common.account')}
           </p>
           {user ? (
             <>
               <div className="px-4 py-2 text-sm text-cyan-400">
-                {user.email || 'Пользователь'}
+                {user.email || t('common.user')}
               </div>
               {onSignOut && (
                 <Button
@@ -578,7 +630,7 @@ function NavContent({
                   className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
-                  Выйти
+                  {t('common.signOut')}
                 </Button>
               )}
             </>
@@ -590,7 +642,7 @@ function NavContent({
                 className="w-full justify-start text-cyan-500/60 hover:text-cyan-400 hover:bg-cyan-500/10"
               >
                 <LogIn className="h-4 w-4 mr-2" />
-                Войти
+                {t('common.signIn')}
               </Button>
             )
           )}

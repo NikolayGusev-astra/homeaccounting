@@ -55,6 +55,9 @@ const translations: Record<Language, Record<string, string>> = {
     'common.signOut': 'Sign Out',
     'common.data': 'Data',
     'common.user': 'User',
+    'common.language': 'Language',
+    'common.language.ru': 'Русский',
+    'common.language.en': 'English',
     
     // Dashboard
     'dashboard.title': 'Home Accounting',
@@ -64,6 +67,15 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.expenses': 'Expenses',
     'dashboard.savings': 'Savings',
     'dashboard.cashGaps': 'cash gaps',
+    'dashboard.monthlyIncome': 'Monthly Income',
+    'dashboard.monthlyExpenses': 'Monthly Expenses',
+    'dashboard.finalBalance': 'Final Balance',
+    'dashboard.cashGapsTitle': 'Cash Gaps',
+    'dashboard.cashGapsShortage': 'Shortage',
+    'dashboard.calendarTitle': 'Funds Movement Calendar',
+    'dashboard.dayDetails': 'Payment Details for the Day',
+    'dashboard.balanceAtEndOfDay': 'Balance at End of Day',
+    'dashboard.dayOfMonth': 'day',
     
     // Income
     'income.title': 'Income',
@@ -89,6 +101,17 @@ const translations: Record<Language, Record<string, string>> = {
     'income.transferType': 'Transfer type',
     'income.transfer.received': 'Received transfer',
     'income.transfer.sent': 'Sent transfer',
+    'income.dayOfReceipt': 'Day of receipt',
+    'income.dayOfReceiptSuffix': 'of the month',
+    'income.notesPlaceholder': 'Additional information',
+    'income.namePlaceholder': 'Salary, bonus, etc.',
+    'income.amountPlaceholder': '100000',
+    'income.targetMonth': 'Target month',
+    'income.targetYear': 'Target year',
+    'income.year': 'Year',
+    'income.notesOptional': 'Notes (optional)',
+    'income.transferReceivedDesc': 'Received transfer is counted as income',
+    'income.transferSentDesc': 'Sent transfer will be automatically added to expenses',
     
     // Expenses
     'expenses.title': 'Expenses',
@@ -111,6 +134,13 @@ const translations: Record<Language, Record<string, string>> = {
     'expenses.totalRequired': 'Required payments',
     'expenses.totalOptional': 'Optional expenses',
     'expenses.categoryFilter': 'Filter by category:',
+    'expenses.subcategory': 'Subcategory',
+    'expenses.noSubcategory': 'No subcategory',
+    'expenses.transferType': 'Transfer type',
+    'expenses.transfer.sent': 'Sent transfer (expense)',
+    'expenses.transfer.received': 'Received transfer (will be in income)',
+    'expenses.transfer.sentDesc': 'Sent transfer is counted as expense',
+    'expenses.transfer.receivedDesc': 'Received transfer will be automatically added to income',
     
     // Categories
     'category.credits': '💳 Credits',
@@ -121,8 +151,27 @@ const translations: Record<Language, Record<string, string>> = {
     'category.other': '📦 Other',
     'category.transfers': '↔️ Transfers',
     
+    // Subcategories
+    'subcategory.electricity': '⚡ Electricity',
+    'subcategory.gas': '🔥 Gas',
+    'subcategory.water': '💧 Water',
+    'subcategory.heating': '🌡️ Heating',
+    'subcategory.internet': '🌐 Internet',
+    'subcategory.tv': '📺 TV',
+    'subcategory.groceries': '🛒 Groceries',
+    'subcategory.household': '🧴 Household chemicals',
+    'subcategory.cosmetics': '💄 Cosmetics',
+    'subcategory.repair': '🔨 Repair',
+    'subcategory.pharmacy': '💊 Pharmacy',
+    'subcategory.clinic': '🏥 Clinic',
+    'subcategory.sport': '🏋️ Sport',
+    'subcategory.carRepair': '🔧 Car repair',
+    'subcategory.gasStation': '⛽ Gas station',
+    'subcategory.carService': '🔩 Car service',
+    
     // Analytics
     'analytics.title': 'Analytics',
+    'analytics.subtitle': 'Statistics and analytics of your finances',
     'analytics.totalIncome': 'Total Income',
     'analytics.totalExpenses': 'Total Expenses',
     'analytics.finalBalance': 'Final Balance',
@@ -130,6 +179,18 @@ const translations: Record<Language, Record<string, string>> = {
     'analytics.categoryDistribution': 'Expense Distribution by Category',
     'analytics.balanceDynamics': 'Balance Dynamics for the Month',
     'analytics.categoryStats': 'Statistics by Category',
+    'analytics.sources': 'sources',
+    'analytics.payments': 'payments',
+    'analytics.cashGaps': 'cash gaps',
+    'analytics.noGaps': 'No gaps',
+    'analytics.percentOfIncome': '% of income',
+    'analytics.category': 'Category',
+    'analytics.total': 'Total',
+    'analytics.average': 'Average',
+    'analytics.min': 'Min',
+    'analytics.max': 'Max',
+    'analytics.balance': 'Balance',
+    'analytics.noData': 'No data to display',
     
     // Auth
     'auth.signIn': 'Sign In or Register',
@@ -150,6 +211,8 @@ const translations: Record<Language, Record<string, string>> = {
     'message.dataExported': 'Data exported successfully',
     'message.dataImported': 'Data imported successfully',
     'message.deleteConfirm': 'Delete this item?',
+    'message.importError': 'Import error',
+    'message.syncInProgress': 'Sync already in progress...',
   },
   ru: {
     // Navigation
@@ -173,6 +236,9 @@ const translations: Record<Language, Record<string, string>> = {
     'common.signOut': 'Выйти',
     'common.data': 'Данные',
     'common.user': 'Пользователь',
+    'common.language': 'Язык',
+    'common.language.ru': 'Русский',
+    'common.language.en': 'English',
     
     // Dashboard
     'dashboard.title': 'Домашняя бухгалтерия',
@@ -182,6 +248,15 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.expenses': 'Расходы',
     'dashboard.savings': 'Сбережения',
     'dashboard.cashGaps': 'кассовых разрывов',
+    'dashboard.monthlyIncome': 'Доходы за месяц',
+    'dashboard.monthlyExpenses': 'Расходы за месяц',
+    'dashboard.finalBalance': 'Итоговый баланс',
+    'dashboard.cashGapsTitle': 'Кассовые разрывы',
+    'dashboard.cashGapsShortage': 'Нехватка',
+    'dashboard.calendarTitle': 'Календарь движения средств',
+    'dashboard.dayDetails': 'Детали платежей на день',
+    'dashboard.balanceAtEndOfDay': 'Баланс на конец дня',
+    'dashboard.dayOfMonth': 'числа',
     
     // Income
     'income.title': 'Доходы',
@@ -207,6 +282,17 @@ const translations: Record<Language, Record<string, string>> = {
     'income.transferType': 'Тип перевода',
     'income.transfer.received': 'Полученный перевод',
     'income.transfer.sent': 'Отправленный перевод',
+    'income.dayOfReceipt': 'День поступления',
+    'income.dayOfReceiptSuffix': 'числа',
+    'income.notesPlaceholder': 'Дополнительная информация',
+    'income.namePlaceholder': 'Зарплата, премия и т.д.',
+    'income.amountPlaceholder': '100000',
+    'income.targetMonth': 'Целевой месяц',
+    'income.targetYear': 'Целевой год',
+    'income.year': 'Год',
+    'income.notesOptional': 'Примечание (необязательно)',
+    'income.transferReceivedDesc': 'Полученный перевод учитывается как доход',
+    'income.transferSentDesc': 'Отправленный перевод будет автоматически добавлен в расходы',
     
     // Expenses
     'expenses.title': 'Расходы',
@@ -229,6 +315,13 @@ const translations: Record<Language, Record<string, string>> = {
     'expenses.totalRequired': 'Обязательные платежи',
     'expenses.totalOptional': 'Необязательные расходы',
     'expenses.categoryFilter': 'Фильтр по категориям:',
+    'expenses.subcategory': 'Подкатегория',
+    'expenses.noSubcategory': 'Без подкатегории',
+    'expenses.transferType': 'Тип перевода',
+    'expenses.transfer.sent': 'Отправленный перевод (расход)',
+    'expenses.transfer.received': 'Полученный перевод (будет в доходах)',
+    'expenses.transfer.sentDesc': 'Отправленный перевод учитывается как расход',
+    'expenses.transfer.receivedDesc': 'Полученный перевод будет автоматически добавлен в доходы',
     
     // Categories
     'category.credits': '💳 Кредиты',
@@ -239,8 +332,27 @@ const translations: Record<Language, Record<string, string>> = {
     'category.other': '📦 Прочее',
     'category.transfers': '↔️ Переводы',
     
+    // Subcategories
+    'subcategory.electricity': '⚡ Электроэнергия',
+    'subcategory.gas': '🔥 Газ',
+    'subcategory.water': '💧 Вода',
+    'subcategory.heating': '🌡️ Отопление',
+    'subcategory.internet': '🌐 Интернет',
+    'subcategory.tv': '📺 ТВ',
+    'subcategory.groceries': '🛒 Продукты',
+    'subcategory.household': '🧴 Бытовая химия',
+    'subcategory.cosmetics': '💄 Косметика',
+    'subcategory.repair': '🔨 Ремонт',
+    'subcategory.pharmacy': '💊 Аптека',
+    'subcategory.clinic': '🏥 Клиника',
+    'subcategory.sport': '🏋️ Спорт',
+    'subcategory.carRepair': '🔧 Ремонт',
+    'subcategory.gasStation': '⛽ Заправка',
+    'subcategory.carService': '🔩 Обслуживание',
+    
     // Analytics
     'analytics.title': 'Аналитика',
+    'analytics.subtitle': 'Статистика и аналитика ваших финансов',
     'analytics.totalIncome': 'Всего доходов',
     'analytics.totalExpenses': 'Всего расходов',
     'analytics.finalBalance': 'Итоговый баланс',
@@ -248,6 +360,18 @@ const translations: Record<Language, Record<string, string>> = {
     'analytics.categoryDistribution': 'Распределение расходов по категориям',
     'analytics.balanceDynamics': 'Динамика баланса за месяц',
     'analytics.categoryStats': 'Статистика по категориям',
+    'analytics.sources': 'источников',
+    'analytics.payments': 'платежей',
+    'analytics.cashGaps': 'кассовых разрывов',
+    'analytics.noGaps': 'Без разрывов',
+    'analytics.percentOfIncome': '% от доходов',
+    'analytics.category': 'Категория',
+    'analytics.total': 'Всего',
+    'analytics.average': 'Среднее',
+    'analytics.min': 'Мин',
+    'analytics.max': 'Макс',
+    'analytics.balance': 'Баланс',
+    'analytics.noData': 'Нет данных для отображения',
     
     // Auth
     'auth.signIn': 'Войти или Зарегистрироваться',
@@ -269,6 +393,8 @@ const translations: Record<Language, Record<string, string>> = {
     'message.dataImported': 'Данные успешно импортированы',
     'message.deleteConfirm': 'Удалить этот элемент?',
     'message.signOutError': 'Ошибка при выходе',
+    'message.importError': 'Ошибка при импорте данных',
+    'message.syncInProgress': 'Синхронизация уже выполняется...',
   },
 };
 
@@ -280,17 +406,45 @@ export function t(key: string): string {
 
 // Hook for React components
 // This hook should only be used in client components ('use client')
-// Import React in the component file where you use this hook
 export function useTranslation() {
-  // This hook requires React to be imported in the component
-  // For now, return a simple implementation that works during SSR
-  // Components should import React and use useState directly if needed
+  // Dynamic import to avoid SSR issues
+  // @ts-ignore - require is available in Next.js runtime
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const React = typeof window !== 'undefined' ? require('react') : null;
+  
+  if (!React) {
+    // Return a mock hook for SSR
+    return {
+      t,
+      language: 'en' as Language,
+      setLanguage: () => {},
+    };
+  }
+  
+  const [lang, setLangState] = React.useState<Language>(getLanguage());
+  
+  React.useEffect(() => {
+    // Sync with localStorage changes
+    const handleStorageChange = () => {
+      setLangState(getLanguage());
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+  
+  const changeLanguage = (newLang: Language) => {
+    setLanguage(newLang);
+    setLangState(newLang);
+    // Force re-render by updating state
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('languagechange'));
+    }
+  };
+  
   return {
     t,
-    language: getLanguage(),
-    setLanguage: (newLang: Language) => {
-      setLanguage(newLang);
-    },
+    language: lang,
+    setLanguage: changeLanguage,
   };
 }
 

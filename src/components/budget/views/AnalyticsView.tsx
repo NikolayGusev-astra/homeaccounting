@@ -4,13 +4,20 @@ import React from 'react';
 import { useBudgetStore } from '@/store/budgetStore';
 import { formatCurrency } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { t, useTranslation } from '@/lib/i18n';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const COLORS = ['#FF006E', '#00D4FF', '#39FF14', '#FFFF00', '#FF1493', '#00FF41', '#FFDE00'];
 
 export default function AnalyticsView() {
   const { currentMonth, getMonthlyForecast, getCategoryStats, expenses, income } = useBudgetStore();
+  const { language } = useTranslation();
   const [year, month] = currentMonth.split('-').map(Number);
+  
+  // Force re-render on language change
+  React.useEffect(() => {
+    // This will trigger re-render when language changes
+  }, [language]);
   
   const forecast = getMonthlyForecast(year, month);
   const categoryStats = getCategoryStats(year, month);
@@ -49,10 +56,10 @@ export default function AnalyticsView() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-cyan-400 neon-text-cyan">
-          Аналитика
+          {t('analytics.title')}
         </h2>
         <p className="text-sm text-cyan-500/60 mt-1">
-          Статистика и аналитика ваших финансов
+          {t('analytics.subtitle')}
         </p>
       </div>
 
@@ -61,7 +68,7 @@ export default function AnalyticsView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-cyan-500/60">
-              Всего доходов
+              {t('analytics.totalIncome')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -69,7 +76,7 @@ export default function AnalyticsView() {
               {formatCurrency(forecast.totalIncome)}
             </p>
             <p className="text-xs text-cyan-500/40 mt-1">
-              {income.length} источников
+              {income.length} {t('analytics.sources')}
             </p>
           </CardContent>
         </Card>
@@ -77,7 +84,7 @@ export default function AnalyticsView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-cyan-500/60">
-              Всего расходов
+              {t('analytics.totalExpenses')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -85,7 +92,7 @@ export default function AnalyticsView() {
               {formatCurrency(forecast.totalExpenses)}
             </p>
             <p className="text-xs text-cyan-500/40 mt-1">
-              {expenses.length} платежей
+              {expenses.length} {t('analytics.payments')}
             </p>
           </CardContent>
         </Card>
@@ -93,7 +100,7 @@ export default function AnalyticsView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-cyan-500/60">
-              Итоговый баланс
+              {t('analytics.finalBalance')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -101,7 +108,7 @@ export default function AnalyticsView() {
               {formatCurrency(forecast.endingBalance)}
             </p>
             <p className="text-xs text-cyan-500/40 mt-1">
-              {forecast.cashGaps.length > 0 ? `${forecast.cashGaps.length} кассовых разрывов` : 'Без разрывов'}
+              {forecast.cashGaps.length > 0 ? `${forecast.cashGaps.length} ${t('analytics.cashGaps')}` : t('analytics.noGaps')}
             </p>
           </CardContent>
         </Card>
@@ -109,7 +116,7 @@ export default function AnalyticsView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-cyan-500/60">
-              Сбережения
+              {t('analytics.savingsRate')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -117,7 +124,7 @@ export default function AnalyticsView() {
               {formatCurrency(forecast.totalIncome - forecast.totalExpenses)}
             </p>
             <p className="text-xs text-cyan-500/40 mt-1">
-              {((forecast.totalIncome - forecast.totalExpenses) / forecast.totalIncome * 100).toFixed(1)}% от доходов
+              {((forecast.totalIncome - forecast.totalExpenses) / forecast.totalIncome * 100).toFixed(1)} {t('analytics.percentOfIncome')}
             </p>
           </CardContent>
         </Card>
@@ -129,7 +136,7 @@ export default function AnalyticsView() {
         <Card className="neon-card">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-cyan-400">
-              Распределение расходов по категориям
+              {t('analytics.categoryDistribution')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -155,7 +162,7 @@ export default function AnalyticsView() {
               </ResponsiveContainer>
             ) : (
               <div className="h-[300px] flex items-center justify-center text-cyan-500/40">
-                Нет данных для отображения
+                {t('analytics.noData')}
               </div>
             )}
           </CardContent>
@@ -165,7 +172,7 @@ export default function AnalyticsView() {
         <Card className="neon-card">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-cyan-400">
-              Динамика баланса за месяц
+              {t('analytics.balanceDynamics')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -189,7 +196,7 @@ export default function AnalyticsView() {
                   dataKey="balance"
                   stroke="#00D4FF"
                   strokeWidth={2}
-                  name="Баланс"
+                  name={t('analytics.balance')}
                   dot={false}
                 />
                 <Line
@@ -197,7 +204,7 @@ export default function AnalyticsView() {
                   dataKey="income"
                   stroke="#39FF14"
                   strokeWidth={1}
-                  name="Доходы"
+                  name={t('dashboard.income')}
                   dot={false}
                 />
                 <Line
@@ -205,7 +212,7 @@ export default function AnalyticsView() {
                   dataKey="expenses"
                   stroke="#FF006E"
                   strokeWidth={1}
-                  name="Расходы"
+                  name={t('dashboard.expenses')}
                   dot={false}
                 />
               </LineChart>
@@ -218,7 +225,7 @@ export default function AnalyticsView() {
       <Card className="neon-card">
         <CardHeader>
           <CardTitle className="text-lg font-semibold text-cyan-400">
-            Статистика по категориям
+            {t('analytics.categoryStats')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -226,12 +233,12 @@ export default function AnalyticsView() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-cyan-500/20">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-cyan-400">Категория</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">Всего</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">Платежей</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">Среднее</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">Мин</th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">Макс</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-cyan-400">{t('analytics.category')}</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">{t('analytics.total')}</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">{t('analytics.payments')}</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">{t('analytics.average')}</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">{t('analytics.min')}</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-cyan-400">{t('analytics.max')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -267,7 +274,7 @@ export default function AnalyticsView() {
                 ) : (
                   <tr>
                     <td colSpan={6} className="text-center py-12 text-cyan-500/40">
-                      Нет данных для отображения
+                      {t('analytics.noData')}
                     </td>
                   </tr>
                 )}

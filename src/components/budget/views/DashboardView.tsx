@@ -13,11 +13,18 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils';
+import { t, useTranslation } from '@/lib/i18n';
 
 export default function DashboardView() {
   const { currentMonth, getMonthlyForecast, getTotalExpenses, income, expenses, settings } = useBudgetStore();
+  const { language } = useTranslation();
   const [selectedDay, setSelectedDay] = React.useState<any>(null);
   const [, setTick] = React.useState(0);
+  
+  // Force re-render on language change
+  React.useEffect(() => {
+    // This will trigger re-render when language changes
+  }, [language]);
 
   // Перерендер при изменении данных в store
   const store = useBudgetStore.getState();
@@ -101,7 +108,7 @@ export default function DashboardView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-green-500/60">
-              Доходы за месяц
+              {t('dashboard.monthlyIncome')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -113,7 +120,7 @@ export default function DashboardView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-pink-500/60">
-              Расходы за месяц
+              {t('dashboard.monthlyExpenses')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -125,7 +132,7 @@ export default function DashboardView() {
         <Card className="neon-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-cyan-500/60">
-              Итоговый баланс
+              {t('dashboard.finalBalance')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -142,7 +149,7 @@ export default function DashboardView() {
           <CardHeader>
             <CardTitle className="text-pink-400 flex items-center gap-2">
               <TrendingDown className="h-5 w-5" />
-              Кассовые разрывы ({forecast.cashGaps.length})
+              {t('dashboard.cashGapsTitle')} ({forecast.cashGaps.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -154,7 +161,7 @@ export default function DashboardView() {
                       {gap.day} {new Date(gap.date).toLocaleDateString('ru-RU', { month: 'long', day: 'numeric' })}
                     </p>
                     <p className="text-sm text-pink-400">
-                      Нехватка: {formatCurrency(gap.gapAmount)}
+                      {t('dashboard.cashGapsShortage')}: {formatCurrency(gap.gapAmount)}
                     </p>
                   </div>
                   <p className={`text-lg font-bold ${gap.gapAmount > 0 ? 'text-pink-400' : 'text-green-400'}`}>
@@ -172,7 +179,7 @@ export default function DashboardView() {
         <CardHeader>
           <CardTitle className="text-cyan-400 flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Календарь движения средств
+            {t('dashboard.calendarTitle')}
             <span className="text-sm text-cyan-500/60 ml-2">
               {new Date(year, month - 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
             </span>
@@ -234,10 +241,10 @@ export default function DashboardView() {
                       <div className="h-2 w-2 rounded-full bg-pink-500 animate-pulse" title="Кассовый разрыв" />
                     )}
                     {hasExpenses && !isCashGap && (
-                      <div className="h-2 w-2 rounded-full bg-pink-400" title="Расходы" />
+                      <div className="h-2 w-2 rounded-full bg-pink-400" title={t('dashboard.expenses')} />
                     )}
                     {hasIncome && !hasExpenses && !isCashGap && (
-                      <div className="h-2 w-2 rounded-full bg-green-400" title="Доходы" />
+                      <div className="h-2 w-2 rounded-full bg-green-400" title={t('dashboard.income')} />
                     )}
                   </div>
                 </div>
@@ -255,13 +262,13 @@ export default function DashboardView() {
               {selectedDay && `${selectedDay.day} ${new Date(year, month - 1, selectedDay.day).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}`}
             </DialogTitle>
             <DialogDescription>
-              Детали платежей на день
+              {t('dashboard.dayDetails')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 rounded-lg bg-cyan-500/10">
               <div>
-                <p className="text-sm text-cyan-400 font-medium">Баланс на конец дня</p>
+                <p className="text-sm text-cyan-400 font-medium">{t('dashboard.balanceAtEndOfDay')}</p>
                 <p className="text-3xl font-bold text-cyan-300 neon-text-cyan">
                   {formatCurrency(selectedDay?.balance || 0)}
                 </p>
@@ -270,7 +277,7 @@ export default function DashboardView() {
 
             {selectedDay?.incomeTransactions && selectedDay.incomeTransactions.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-green-400 mb-3">Доходы</h3>
+                <h3 className="text-lg font-semibold text-green-400 mb-3">{t('dashboard.income')}</h3>
                 <div className="space-y-2">
                   {selectedDay.incomeTransactions.map((inc, index) => (
                     <Card key={index} className="neon-card border-green-500/30">
@@ -293,7 +300,7 @@ export default function DashboardView() {
 
             {selectedDay?.expenseTransactions && selectedDay.expenseTransactions.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold text-pink-400 mb-3">Расходы</h3>
+                <h3 className="text-lg font-semibold text-pink-400 mb-3">{t('dashboard.expenses')}</h3>
                 <div className="space-y-2">
                   {selectedDay.expenseTransactions.map((exp, index) => (
                     <Card key={index} className="neon-card border-pink-500/30">

@@ -13,7 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog';
+import { t } from '@/lib/i18n';
 
 export default function IncomeView() {
   const { income, deleteIncome, toggleIncomeReceived, addIncome, updateIncome, currentMonth } = useBudgetStore();
@@ -80,22 +82,25 @@ export default function IncomeView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-cyan-400 neon-text-cyan">
-            Доходы
+            {t('income.title')}
           </h2>
           <p className="text-sm text-cyan-500/60 mt-1">
-            Управление источниками дохода
+            {t('income.subtitle')}
           </p>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="neon-button-cyan">
               <Plus className="h-4 w-4 mr-2" />
-              Добавить доход
+              {t('income.add')}
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-[#0d0d14] border-cyan-500/30">
             <DialogHeader>
-              <DialogTitle className="text-cyan-400">Добавить доход</DialogTitle>
+              <DialogTitle className="text-cyan-400">{t('income.add')}</DialogTitle>
+              <DialogDescription className="text-cyan-500/60">
+                {t('income.subtitle')}
+              </DialogDescription>
             </DialogHeader>
             <IncomeForm
               onSubmit={(data) => {
@@ -113,7 +118,7 @@ export default function IncomeView() {
         {income.length === 0 ? (
           <Card className="neon-card">
             <CardContent className="p-12 text-center">
-              <p className="text-cyan-500/60">Нет добавленных доходов</p>
+              <p className="text-cyan-500/60">{t('income.empty')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -131,18 +136,18 @@ export default function IncomeView() {
                           "min-w-[80px]"
                         )}
                       >
-                        {inc.received ? 'Получено' : 'Ожидается'}
+                        {inc.received ? t('income.received') : t('income.pending')}
                       </Badge>
                       <Badge variant="outline" className="border-cyan-500/30 text-cyan-500/60 min-w-[80px]">
-                        {inc.frequency === 'monthly' ? 'Ежемесячно' :
-                         inc.frequency === 'weekly' ? 'Еженедельно' :
-                         inc.frequency === 'biweekly' ? 'Раз в 2 недели' :
-                         inc.frequency === 'once' ? 'Разово' : 'Ежемесячно'}
+                        {inc.frequency === 'monthly' ? t('income.frequency.monthly') :
+                         inc.frequency === 'weekly' ? t('income.frequency.weekly') :
+                         inc.frequency === 'biweekly' ? t('income.frequency.biweekly') :
+                         inc.frequency === 'once' ? t('income.frequency.once') : t('income.frequency.monthly')}
                       </Badge>
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-cyan-500/60">
-                        День поступления: <span className="text-cyan-400 font-medium">{inc.dayOfMonth} числа</span>
+                        {t('income.dayOfReceipt')}: <span className="text-cyan-400 font-medium">{inc.dayOfMonth} {t('income.dayOfReceiptSuffix')}</span>
                       </p>
                       <p className="text-2xl font-bold text-green-400 neon-text-green">
                         {formatCurrency(inc.amount)}
@@ -191,7 +196,10 @@ export default function IncomeView() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="bg-[#0d0d14] border-cyan-500/30 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-cyan-400">Редактировать доход</DialogTitle>
+            <DialogTitle className="text-cyan-400">{t('income.edit')}</DialogTitle>
+            <DialogDescription className="text-cyan-500/60">
+              {t('income.subtitle')}
+            </DialogDescription>
           </DialogHeader>
           <IncomeForm
             onSubmit={(data) => {
@@ -276,18 +284,18 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="text-sm font-medium text-cyan-400 mb-2 block">Название</label>
+        <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.name')}</label>
         <input
           type="text"
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none neon-input"
-          placeholder="Зарплата, премия и т.д."
+          placeholder={t('income.namePlaceholder')}
         />
       </div>
       <div>
-        <label className="text-sm font-medium text-cyan-400 mb-2 block">Сумма (₽)</label>
+        <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.amount')}</label>
         <input
           type="number"
           required
@@ -296,11 +304,11 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
           value={formData.amount}
           onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none neon-input"
-          placeholder="100000"
+          placeholder={t('income.amountPlaceholder')}
         />
       </div>
       <div>
-        <label className="text-sm font-medium text-cyan-400 mb-2 block">День поступления</label>
+        <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.dayOfMonth')}</label>
         <input
           type="number"
           required
@@ -313,23 +321,23 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
         />
       </div>
       <div>
-        <label className="text-sm font-medium text-cyan-400 mb-2 block">Периодичность</label>
+        <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.frequency')}</label>
         <select
           value={formData.frequency}
           onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none neon-input"
         >
-          <option value="monthly">Ежемесячно</option>
-          <option value="weekly">Еженедельно</option>
-          <option value="biweekly">Раз в 2 недели</option>
-          <option value="once">Разово</option>
+          <option value="monthly">{t('income.frequency.monthly')}</option>
+          <option value="weekly">{t('income.frequency.weekly')}</option>
+          <option value="biweekly">{t('income.frequency.biweekly')}</option>
+          <option value="once">{t('income.frequency.once')}</option>
         </select>
       </div>
       
       {formData.frequency === 'once' && (
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium text-cyan-400 mb-2 block">Целевой месяц</label>
+            <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.targetMonth')}</label>
             <input
               type="number"
               min="1"
@@ -341,7 +349,7 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-cyan-400 mb-2 block">Год</label>
+            <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.year')}</label>
             <input
               type="number"
               min="2024"
@@ -364,37 +372,37 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
           className="w-4 h-4 text-cyan-400 bg-[#0a0a0f] border-cyan-500/30 rounded focus:ring-cyan-400"
         />
         <label htmlFor="isTransfer" className="text-sm font-medium text-cyan-400 cursor-pointer">
-          Это перевод
+          {t('income.isTransfer')}
         </label>
       </div>
 
       {formData.isTransfer && (
         <div>
-          <label className="text-sm font-medium text-cyan-400 mb-2 block">Тип перевода</label>
+          <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.transferType')}</label>
           <select
             value={formData.transferType}
             onChange={(e) => setFormData({ ...formData, transferType: e.target.value as 'sent' | 'received' })}
             className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none neon-input"
           >
-            <option value="received">💰 Полученный перевод (доход)</option>
-            <option value="sent">💸 Отправленный перевод (будет в расходах)</option>
+            <option value="received">💰 {t('income.transfer.received')} ({t('nav.income')})</option>
+            <option value="sent">💸 {t('income.transfer.sent')} ({t('nav.expenses')})</option>
           </select>
           <p className="text-xs text-cyan-500/60 mt-1">
             {formData.transferType === 'received' 
-              ? 'Полученный перевод учитывается как доход'
-              : 'Отправленный перевод будет автоматически добавлен в расходы'}
+              ? t('income.transferReceivedDesc')
+              : t('income.transferSentDesc')}
           </p>
         </div>
       )}
       
       <div>
-        <label className="text-sm font-medium text-cyan-400 mb-2 block">Примечание (необязательно)</label>
+        <label className="text-sm font-medium text-cyan-400 mb-2 block">{t('income.notesOptional')}</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none neon-input resize-none"
           rows={2}
-          placeholder="Дополнительная информация"
+          placeholder={t('income.notesPlaceholder')}
         />
       </div>
       <div className="flex gap-2 pt-4">
@@ -402,7 +410,7 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
           type="submit"
           className="flex-1 neon-button-cyan"
         >
-          Сохранить
+          {t('common.save')}
         </Button>
         <Button
           type="button"
@@ -410,7 +418,7 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
           onClick={onCancel}
           className="text-cyan-400 hover:bg-cyan-500/10"
         >
-          Отмена
+          {t('common.cancel')}
         </Button>
       </div>
     </form>
