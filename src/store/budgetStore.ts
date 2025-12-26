@@ -68,7 +68,6 @@ const calculateForecast = (
   startingBalance: number = 0
 ): MonthlyForecast => {
   // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'budgetStore.ts:63',message:'calculateForecast entry',data:{year,month,expensesCount:expenses.length,incomeCount:income.length,expenses:expenses.map(e=>({id:e.id,name:e.name,amount:e.amount,dayOfMonth:e.dayOfMonth,frequency:e.frequency||'monthly',targetMonth:e.targetMonth,targetYear:e.targetYear}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
   // #endregion
   const daysInMonth = new Date(year, month, 0).getDate();
   const dailyBalances: DailyBalance[] = [];
@@ -119,7 +118,6 @@ const calculateForecast = (
   // Calculate expense occurrences
   expenses.forEach(exp => {
     // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'budgetStore.ts:117',message:'Processing expense',data:{expenseId:exp.id,name:exp.name,amount:exp.amount,dayOfMonth:exp.dayOfMonth,frequency:exp.frequency||'monthly',targetMonth:exp.targetMonth,targetYear:exp.targetYear,year,month},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     const occurrences: number[] = [];
     // По умолчанию считаем monthly, если frequency не установлен
@@ -130,18 +128,15 @@ const calculateForecast = (
       if (exp.targetYear === year && exp.targetMonth === month && exp.dayOfMonth) {
         occurrences.push(exp.dayOfMonth);
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'budgetStore.ts:124',message:'Once expense added',data:{expenseId:exp.id,day:exp.dayOfMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
         // #endregion
       }
     } else if (frequency === 'monthly') {
       if (exp.dayOfMonth) {
         occurrences.push(exp.dayOfMonth);
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'budgetStore.ts:129',message:'Monthly expense added',data:{expenseId:exp.id,day:exp.dayOfMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
       } else {
         // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'budgetStore.ts:132',message:'Monthly expense SKIPPED - no dayOfMonth',data:{expenseId:exp.id,name:exp.name,amount:exp.amount},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
       }
     } else if (frequency === 'weekly') {

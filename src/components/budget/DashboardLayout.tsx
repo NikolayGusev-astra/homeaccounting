@@ -256,19 +256,12 @@ export default function DashboardLayout() {
   }, []);
 
   const renderView = () => {
-    console.log('renderView called, currentView:', currentView);
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardLayout.tsx:258',message:'renderView called',data:{currentView:currentView,expensesViewDefined:typeof ExpensesView !== 'undefined',expensesViewType:typeof ExpensesView},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'G'})}).catch(()=>{});
-    // #endregion agent log
     switch (currentView) {
       case 'dashboard':
         return <DashboardView />;
       case 'income':
         return <IncomeView />;
       case 'expenses':
-        // #region agent log
-        fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DashboardLayout.tsx:265',message:'Rendering ExpensesView',data:{expensesViewDefined:typeof ExpensesView !== 'undefined',expensesViewIsFunction:typeof ExpensesView === 'function',expensesViewIsComponent:React.isValidElement ? 'checking' : 'no-check'},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'H'})}).catch(()=>{});
-        // #endregion agent log
         return <ExpensesView />;
       case 'analytics':
         return <AnalyticsView />;
