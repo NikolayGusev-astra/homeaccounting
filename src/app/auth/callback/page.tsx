@@ -121,21 +121,102 @@ export default function AuthCallback() {
             })
           }
           
-          // Обмениваем code на токен через VK ID SDK
+          // Инициализируем VK ID SDK Config перед обменом кода
           const VKID = window.VKIDSDK
-          // Пытаемся получить device_id из localStorage или используем дефолтный
-          // Если device_id не найден, VK может вернуть ошибку, но попробуем
-          const deviceId = localStorage.getItem('vk_device_id') || 'vk-device-id'
+          
+          // Определяем redirectUrl в зависимости от окружения
+          const getRedirectUrl = () => {
+            const origin = window.location.origin
+            if (origin.includes('homeaccounting.ru')) {
+              return 'https://homeaccounting.ru/auth/callback'
+            }
+            if (origin.includes('homeaccounting.online')) {
+              return 'https://homeaccounting.online/auth/callback'
+            }
+            if (origin.includes('vercel.app')) {
+              return 'https://homeaccounting.vercel.app/auth/callback'
+            }
+            return `${origin}/auth/callback`
+          }
+          
+          const redirectUrl = getRedirectUrl()
+          
+          // Инициализируем Config с теми же параметрами, что и в VKAuth
+          VKID.Config.init({
+            app: 54409028, // VK App ID
+            redirectUrl: redirectUrl,
+            responseMode: VKID.ConfigResponseMode.Callback,
+            source: VKID.ConfigSource.LOWCODE,
+            scope: '',
+          })
+          
+          // Генерируем или получаем device_id
+          // VK ID SDK требует device_id для обмена кода на токен
+          let deviceId = localStorage.getItem('vk_device_id')
+          if (!deviceId) {
+            // Генерируем новый device_id если его нет
+            // Формат device_id для VK ID: обычно это UUID или строка вида "vk-device-{random}"
+            deviceId = `vk-device-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+            localStorage.setItem('vk_device_id', deviceId)
+          }
+          
+          // #region agent log
+          const deviceIdLogData = {
+            location: 'auth/callback/page.tsx:155',
+            message: 'VK device_id handling',
+            data: {
+              origin: window.location.origin,
+              hasDeviceId: !!deviceId,
+              deviceIdSource: localStorage.getItem('vk_device_id') ? 'localStorage' : 'generated',
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'vk-auth-debug',
+              hypothesisId: 'G'
+            },
+            timestamp: Date.now()
+          };
+          fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(deviceIdLogData)
+          }).catch(() => {});
+          // #endregion agent log
           
           try {
+            // #region agent log
+            const beforeExchangeLogData = {
+              location: 'auth/callback/page.tsx:175',
+              message: 'Before VK code exchange',
+              data: {
+                origin: window.location.origin,
+                hasCode: !!vkCode,
+                hasDeviceId: !!deviceId,
+                codeLength: vkCode?.length || 0,
+                deviceIdLength: deviceId?.length || 0,
+                timestamp: Date.now(),
+                sessionId: 'debug-session',
+                runId: 'vk-auth-debug',
+                hypothesisId: 'H'
+              },
+              timestamp: Date.now()
+            };
+            fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(beforeExchangeLogData)
+            }).catch(() => {});
+            // #endregion agent log
+            
             const vkTokenData = await VKID.Auth.exchangeCode(vkCode, deviceId)
+            
             // #region agent log
             const exchangeLogData = {
-              location: 'auth/callback/page.tsx:80',
+              location: 'auth/callback/page.tsx:195',
               message: 'VK code exchange success',
               data: {
                 origin: window.location.origin,
                 hasToken: !!vkTokenData?.token || !!vkTokenData?.access_token,
+                tokenDataKeys: vkTokenData ? Object.keys(vkTokenData) : [],
                 timestamp: Date.now(),
                 sessionId: 'debug-session',
                 runId: 'vk-auth-debug',
@@ -194,12 +275,17 @@ export default function AuthCallback() {
           } catch (error: any) {
             // #region agent log
             const exchangeErrorLogData = {
-              location: 'auth/callback/page.tsx:110',
+              location: 'auth/callback/page.tsx:225',
               message: 'VK code exchange error',
               data: {
                 origin: window.location.origin,
                 error: error.message || String(error),
-                errorStack: error.stack?.substring(0, 200),
+                errorName: error.name,
+                errorStack: error.stack?.substring(0, 500),
+                errorCode: error.code,
+                errorDetails: error.details || error.data,
+                hasCode: !!vkCode,
+                hasDeviceId: !!deviceId,
                 timestamp: Date.now(),
                 sessionId: 'debug-session',
                 runId: 'vk-auth-debug',
@@ -214,6 +300,13 @@ export default function AuthCallback() {
             }).catch(() => {});
             // #endregion agent log
             console.error('VK code exchange error:', error)
+            console.error('Error details:', {
+              message: error.message,
+              name: error.name,
+              code: error.code,
+              details: error.details || error.data,
+              stack: error.stack
+            })
             setStatus('error')
             setMessage(`Ошибка обмена кода VK: ${error.message || 'Неизвестная ошибка'}`)
             setTimeout(() => router.push('/'), 3000)
