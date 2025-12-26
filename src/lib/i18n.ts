@@ -13,12 +13,14 @@ export function setLanguage(lang: Language) {
 }
 
 export function getLanguage(): Language {
+  // Safe for SSR: check window before accessing localStorage
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('app_language') as Language;
     if (saved === 'ru' || saved === 'en') {
       return saved;
     }
   }
+  // Return default language during SSR
   return currentLanguage;
 }
 
@@ -272,8 +274,9 @@ const translations: Record<Language, Record<string, string>> = {
 };
 
 export function t(key: string): string {
+  // Safe for SSR: getLanguage() already handles typeof window check
   const lang = getLanguage();
-  return translations[lang][key] || key;
+  return translations[lang]?.[key] || translations['en']?.[key] || key;
 }
 
 // Hook for React components

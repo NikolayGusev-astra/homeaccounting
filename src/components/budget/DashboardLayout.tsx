@@ -56,12 +56,16 @@ export default function DashboardLayout() {
 
   const monthOptions = getMonthOptions();
 
-  const navigation = [
-    { id: 'dashboard' as ViewMode, label: t('nav.dashboard'), icon: LayoutDashboard },
-    { id: 'income' as ViewMode, label: t('nav.income'), icon: TrendingUp },
-    { id: 'expenses' as ViewMode, label: t('nav.expenses'), icon: CreditCard },
-    { id: 'analytics' as ViewMode, label: t('nav.analytics'), icon: BarChart3 },
-  ];
+  // Move navigation creation to useMemo to avoid SSR issues
+  // t() is now safe for SSR (returns default 'en' language during server-side rendering)
+  const navigation = React.useMemo(() => {
+    return [
+      { id: 'dashboard' as ViewMode, label: t('nav.dashboard'), icon: LayoutDashboard },
+      { id: 'income' as ViewMode, label: t('nav.income'), icon: TrendingUp },
+      { id: 'expenses' as ViewMode, label: t('nav.expenses'), icon: CreditCard },
+      { id: 'analytics' as ViewMode, label: t('nav.analytics'), icon: BarChart3 },
+    ];
+  }, []);
 
   const handleExport = () => {
     console.log('Export button clicked');
