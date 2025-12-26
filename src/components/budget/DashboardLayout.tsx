@@ -29,6 +29,7 @@ import AnalyticsView from './views/AnalyticsView';
 import { AuthDialog } from '@/components/auth/AuthDialog';
 import { QuickAddDialog } from './QuickAddDialog';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
+import { t } from '@/lib/i18n';
 
 export default function DashboardLayout() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
