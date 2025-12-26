@@ -36,7 +36,6 @@ export default function Home() {
       },
       timestamp: Date.now()
     };
-    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(logData)
@@ -44,7 +43,6 @@ export default function Home() {
     
     // Логируем ошибки из консоли
     const originalError = console.error;
-    console.error = function(...args) {
       const errorLogData = {
         location: 'page.tsx:console.error',
         message: 'Console error captured',
@@ -59,7 +57,6 @@ export default function Home() {
         },
         timestamp: Date.now()
       };
-      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorLogData)
@@ -89,7 +86,6 @@ export default function Home() {
         },
         timestamp: Date.now()
       };
-      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resourceLogData)
@@ -119,13 +115,11 @@ export default function Home() {
             },
             timestamp: Date.now()
           };
-          fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(syncLogData)
           }).catch(() => {});
           // #endregion agent log
-          console.log('Данные успешно загружены из Supabase');
         })
         .catch((error) => {
           // #region agent log
@@ -145,13 +139,11 @@ export default function Home() {
             },
             timestamp: Date.now()
           };
-          fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(errorLogData)
           }).catch(() => {});
           // #endregion agent log
-          console.error('Ошибка загрузки данных из Supabase:', error);
           hasSyncedRef.current = false; // Позволяем повторить попытку
         });
     }
@@ -161,10 +153,8 @@ export default function Home() {
       if (isSupabaseEnabled() && document.visibilityState === 'visible') {
         syncFromSupabase()
           .then(() => {
-            console.log('Данные синхронизированы при возврате фокуса');
           })
           .catch((error) => {
-            console.error('Ошибка синхронизации при возврате фокуса:', error);
           });
       }
     };
@@ -180,10 +170,8 @@ export default function Home() {
           if (document.visibilityState === 'visible') {
             syncFromSupabase()
               .then(() => {
-                console.log('Периодическая синхронизация выполнена');
               })
               .catch((error) => {
-                console.error('Ошибка периодической синхронизации:', error);
               });
           }
         }, 30000); // 30 секунд

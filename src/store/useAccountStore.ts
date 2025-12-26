@@ -53,7 +53,6 @@ export const useAccountStore = create<AccountStore>()(
       recalculateAllBalances: () => {
         // TODO: Implement balance recalculation logic based on transactions
         // For now, balances are managed manually
-        console.log('Balances recalculation triggered');
       },
     }),
     {

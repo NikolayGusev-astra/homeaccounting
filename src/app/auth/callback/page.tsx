@@ -38,7 +38,6 @@ function AuthCallbackContent() {
           },
           timestamp: Date.now()
         };
-        fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(callbackLogData)
@@ -67,7 +66,6 @@ function AuthCallbackContent() {
             },
             timestamp: Date.now()
           };
-          fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(errorLogData)
@@ -96,7 +94,6 @@ function AuthCallbackContent() {
             },
             timestamp: Date.now()
           };
-          fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(vkCodeLogData)
@@ -175,7 +172,6 @@ function AuthCallbackContent() {
             },
             timestamp: Date.now()
           };
-          fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(deviceIdLogData)
@@ -200,7 +196,6 @@ function AuthCallbackContent() {
               },
               timestamp: Date.now()
             };
-            fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(beforeExchangeLogData)
@@ -224,7 +219,6 @@ function AuthCallbackContent() {
               },
               timestamp: Date.now()
             };
-            fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(exchangeLogData)
@@ -254,7 +248,6 @@ function AuthCallbackContent() {
                 },
                 timestamp: Date.now()
               };
-              fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vkAuthErrorLogData)
@@ -293,14 +286,11 @@ function AuthCallbackContent() {
               },
               timestamp: Date.now()
             };
-            fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(exchangeErrorLogData)
             }).catch(() => {});
             // #endregion agent log
-            console.error('VK code exchange error:', error)
-            console.error('Error details:', {
               message: error.message,
               name: error.name,
               code: error.code,
@@ -318,7 +308,6 @@ function AuthCallbackContent() {
         const { data, error } = await supabase?.auth.getSession()
         
         if (error) {
-          console.error('Auth error:', error)
           setStatus('error')
           setMessage(`Ошибка авторизации: ${error.message}`)
           setTimeout(() => router.push('/'), 3000)
@@ -340,7 +329,6 @@ function AuthCallbackContent() {
           setTimeout(() => router.push('/'), 3000)
         }
       } catch (error: any) {
-        console.error('Unexpected error:', error)
         setStatus('error')
         setMessage(`Неожиданная ошибка: ${error.message}`)
         setTimeout(() => router.push('/'), 3000)

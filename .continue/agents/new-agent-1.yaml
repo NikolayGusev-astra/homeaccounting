@@ -1,0 +1,27 @@
+name: Z.AI Configuration
+version: "1.0.0"
+models:
+  - title: GLM-4.7
+    provider: openai
+    model: glm-4.7
+    apiKey: 005d4ee35dfd49bbb94789867a7c9494.VXznylWn1Vosmy9l
+    baseUrl: https://api.z.ai/api/coding/paas/v4
+    roles:
+      - chat
+      - edit
+      - apply
+
+tabAutocompleteModel:
+  title: GLM-4.7
+  provider: openai
+  model: glm-4.7
+  apiKey: 005d4ee35dfd49bbb94789867a7c9494.VXznylWn1Vosmy9l
+  baseUrl: https://api.z.ai/api/coding/paas/v4
+
+contextProviders:
+  - name: code
+  - name: docs
+  - name: diff
+  - name: terminal
+  - name: problems
+  - name: folder

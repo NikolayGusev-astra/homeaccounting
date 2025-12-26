@@ -102,7 +102,6 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     setLoading(true)
     setMessage('')
     try {
-      console.log('VK Auth Data:', vkData) // Для отладки
       
       // VK ID возвращает объект с токеном и данными пользователя
       // Структура может быть: { token: string, user: {...} } или { access_token: string, ... }

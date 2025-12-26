@@ -94,7 +94,6 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
       
       onOpenChange(false);
     } catch (error) {
-      console.error('Error adding item:', error);
       alert(t('message.importError')); // TODO: Add proper error message key
     } finally {
       setLoading(false);

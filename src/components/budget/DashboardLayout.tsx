@@ -72,7 +72,6 @@ export default function DashboardLayout() {
         },
         timestamp: Date.now()
       };
-      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mountLogData)
@@ -101,7 +100,6 @@ export default function DashboardLayout() {
   }, [language]);
 
   const handleExport = () => {
-    console.log('Export button clicked');
     const { exportData } = useBudgetStore.getState();
     const data = exportData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -117,20 +115,16 @@ export default function DashboardLayout() {
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log('Import file selected:', file);
 
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      console.log('File read complete, parsing JSON...');
       try {
         const data = JSON.parse(event.target?.result as string);
-        console.log('Data parsed successfully:', data);
         useBudgetStore.getState().importData(data);
         alert(t('message.dataImported'));
       } catch (error) {
-        console.error('Error parsing JSON:', error);
         alert(t('message.importError'));
       }
     };
@@ -154,9 +148,7 @@ export default function DashboardLayout() {
       
       const { income: updatedIncome, expenses: updatedExpenses } = useBudgetStore.getState();
       alert(`${t('message.syncSuccess')}\n${t('nav.income')}: ${updatedIncome.length}\n${t('nav.expenses')}: ${updatedExpenses.length}`);
-      console.log('Manual sync completed successfully');
     } catch (error) {
-      console.error('Sync error:', error);
       alert(`${t('message.syncError')}: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -165,7 +157,6 @@ export default function DashboardLayout() {
   const handleSignOut = async () => {
     const { error } = await signOut();
     if (error) {
-      console.error('Error signing out:', error);
       alert(t('message.syncError'));
     } else {
       setUser(null);
@@ -174,7 +165,6 @@ export default function DashboardLayout() {
 
   // Initialize dark theme
   useEffect(() => {
-    console.log('useEffect executed, adding dark class to document');
     if (typeof window !== 'undefined') {
       document.documentElement.classList.add('dark');
       
@@ -461,7 +451,6 @@ function NavContent({
           const isActive = currentView === item.id;
 
           const handleNavClick = () => {
-            console.log('Navigation clicked:', item.id);
             setCurrentView(item.id);
           };
 

@@ -73,7 +73,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         },
         timestamp: Date.now()
       };
-      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scriptLoadLogData)
@@ -102,7 +101,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         },
         timestamp: Date.now()
       };
-      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scriptErrorLogData)
@@ -134,7 +132,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
     const VKID = window.VKIDSDK
 
     try {
-      console.log('Initializing VK ID SDK...')
       
       // Определяем redirectUrl в зависимости от окружения
       const getRedirectUrl = () => {
@@ -159,7 +156,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
       }
 
       const redirectUrl = getRedirectUrl()
-      console.log('VK ID Redirect URL:', redirectUrl)
       
       // #region agent log
       const vkInitLogData = {
@@ -178,7 +174,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         },
         timestamp: Date.now()
       };
-      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(vkInitLogData)
@@ -194,14 +189,11 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         scope: '', // Можно добавить нужные scope при необходимости
       })
 
-      console.log('VK ID Config initialized')
 
       // Создаем виджет OAuthList
       const oAuth = new VKID.OAuthList()
-      console.log('VK ID OAuthList created')
 
       if (containerRef.current) {
-        console.log('Rendering VK ID widget in container:', containerRef.current)
         oAuth
           .render({
             container: containerRef.current,
@@ -214,7 +206,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
             onError?.(error)
           })
           .on(VKID.OAuthListInternalEvents.LOGIN_SUCCESS, function (payload: any) {
-            console.log('VK ID LOGIN_SUCCESS:', payload)
             const code = payload.code
             const deviceId = payload.device_id
 
@@ -233,7 +224,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
             // Обмениваем code на токен
             VKID.Auth.exchangeCode(code, deviceId)
               .then((data: any) => {
-                console.log('VK ID Exchange Success:', data)
                 // VK ID возвращает объект с токеном и данными пользователя
                 // Передаем данные в callback
                 onSuccess?.(data)
@@ -245,7 +235,6 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
           })
 
         initializedRef.current = true
-        console.log('VK ID widget initialized successfully')
       } else {
         console.error('Container ref is null')
         setError('Контейнер для виджета VK ID не найден')
