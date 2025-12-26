@@ -54,13 +54,60 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
     const script = document.createElement('script')
     script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
     script.async = true
+    const scriptLoadStartTime = Date.now();
     script.onload = () => {
+      // #region agent log
+      const scriptLoadLogData = {
+        location: 'VKAuth.tsx:57',
+        message: 'VK SDK script loaded',
+        data: {
+          origin: window.location.origin,
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+          loadDuration: Date.now() - scriptLoadStartTime,
+          sdkAvailable: !!window.VKIDSDK,
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'domain-comparison',
+          hypothesisId: 'E'
+        },
+        timestamp: Date.now()
+      };
+      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scriptLoadLogData)
+      }).catch(() => {});
+      // #endregion agent log
       if (window.VKIDSDK) {
         setSdkLoaded(true)
         window.dispatchEvent(new Event('vkid-sdk-loaded'))
       }
     }
     script.onerror = (e) => {
+      // #region agent log
+      const scriptErrorLogData = {
+        location: 'VKAuth.tsx:63',
+        message: 'VK SDK script load error',
+        data: {
+          origin: window.location.origin,
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+          loadDuration: Date.now() - scriptLoadStartTime,
+          error: String(e),
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'domain-comparison',
+          hypothesisId: 'F'
+        },
+        timestamp: Date.now()
+      };
+      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(scriptErrorLogData)
+      }).catch(() => {});
+      // #endregion agent log
       const errorMsg = 'VK ID SDK не загрузился. Проверьте подключение к интернету.'
       console.error('VK ID SDK failed to load:', e)
       setError(errorMsg)
@@ -113,6 +160,30 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
 
       const redirectUrl = getRedirectUrl()
       console.log('VK ID Redirect URL:', redirectUrl)
+      
+      // #region agent log
+      const vkInitLogData = {
+        location: 'VKAuth.tsx:114',
+        message: 'VK ID initialization',
+        data: {
+          origin: window.location.origin,
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+          redirectUrl: redirectUrl,
+          sdkLoaded: !!window.VKIDSDK,
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'domain-comparison',
+          hypothesisId: 'D'
+        },
+        timestamp: Date.now()
+      };
+      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vkInitLogData)
+      }).catch(() => {});
+      // #endregion agent log
 
       // Инициализация конфигурации
       VKID.Config.init({

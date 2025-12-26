@@ -51,6 +51,33 @@ export default function DashboardLayout() {
     setIsMounted(true);
     if (typeof window !== 'undefined') {
       document.documentElement.classList.add('dark');
+      
+      // #region agent log
+      const mountLogData = {
+        location: 'DashboardLayout.tsx:49',
+        message: 'DashboardLayout mount',
+        data: {
+          origin: window.location.origin,
+          hostname: window.location.hostname,
+          protocol: window.location.protocol,
+          pathname: window.location.pathname,
+          language: language,
+          currentView: currentView,
+          currentMonth: currentMonth,
+          userAgent: navigator.userAgent.substring(0, 100),
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'domain-comparison',
+          hypothesisId: 'G'
+        },
+        timestamp: Date.now()
+      };
+      fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mountLogData)
+      }).catch(() => {});
+      // #endregion agent log
     }
   }, []);
 
