@@ -92,16 +92,20 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
       // Определяем redirectUrl в зависимости от окружения
       const getRedirectUrl = () => {
         if (typeof window === 'undefined') {
-          return 'https://homeaccounting.online'
+          return 'https://homeaccounting.ru'
         }
         const origin = window.location.origin
-        // Для продакшена используем основной домен
+        // Для основного домена используем homeaccounting.ru
+        if (origin.includes('homeaccounting.ru')) {
+          return 'https://homeaccounting.ru/auth/callback'
+        }
+        // Для альтернативного домена используем homeaccounting.online
         if (origin.includes('homeaccounting.online')) {
-          return 'https://homeaccounting.online'
+          return 'https://homeaccounting.online/auth/callback'
         }
         // Для Vercel используем vercel.app домен
         if (origin.includes('vercel.app')) {
-          return 'https://homeaccounting.vercel.app'
+          return 'https://homeaccounting.vercel.app/auth/callback'
         }
         // Для локальной разработки
         return `${origin}/auth/callback`
