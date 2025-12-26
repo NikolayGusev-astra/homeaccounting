@@ -77,6 +77,10 @@ const getSubcategoryLabel = (subcategory: string): string => {
 };
 
 export default function ExpensesView() {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:79',message:'ExpensesView component entry',data:{expenseFormDefined:typeof ExpenseForm !== 'undefined',dialogDefined:typeof Dialog !== 'undefined',buttonDefined:typeof Button !== 'undefined',badgeDefined:typeof Badge !== 'undefined',useTranslationDefined:typeof useTranslation !== 'undefined',tDefined:typeof t !== 'undefined',categoryIconsDefined:typeof categoryIcons !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion agent log
+  
   const { expenses, deleteExpense, toggleExpensePaid, addExpense, updateExpense, currentMonth } = useBudgetStore();
   const { language } = useTranslation();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
@@ -87,6 +91,9 @@ export default function ExpensesView() {
   
   // Force re-render on language change
   React.useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:91',message:'ExpensesView useEffect language change',data:{language:language,expenseFormDefined:typeof ExpenseForm !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion agent log
     // This will trigger re-render when language changes
   }, [language]);
 
@@ -163,6 +170,16 @@ export default function ExpensesView() {
     return expenses.filter(e => e && !e.isRequired).reduce((sum, e) => sum + (e.amount || 0), 0);
   }, [expenses]);
 
+  // #region agent log
+  const beforeRenderCheck = {
+    expenseFormDefined: typeof ExpenseForm !== 'undefined',
+    expenseFormType: typeof ExpenseForm,
+    expenseFormIsFunction: typeof ExpenseForm === 'function',
+    expenseFormIsComponent: React.isValidElement ? 'checking' : 'no-check',
+  };
+  fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:166',message:'ExpensesView before render',data:beforeRenderCheck,timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion agent log
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -188,6 +205,12 @@ export default function ExpensesView() {
                 {t('expenses.subtitle')}
               </DialogDescription>
             </DialogHeader>
+            {/* #region agent log */}
+            {(() => {
+              fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:191',message:'Before ExpenseForm render',data:{expenseFormDefined:typeof ExpenseForm !== 'undefined',expenseFormType:typeof ExpenseForm,expenseFormValue:ExpenseForm ? 'exists' : 'null/undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'D'})}).catch(()=>{});
+              return null;
+            })()}
+            {/* #endregion agent log */}
             <ExpenseForm
               onSubmit={(data) => {
                 addExpense(data);
@@ -390,10 +413,17 @@ interface ExpenseFormProps {
 }
 
 function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:392',message:'ExpenseForm component entry',data:{hasOnSubmit:typeof onSubmit === 'function',hasOnCancel:typeof onCancel === 'function',hasInitialData:!!initialData},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion agent log
+  
   const { language } = useTranslation();
   
   // Force re-render on language change
   React.useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:397',message:'ExpenseForm useEffect',data:{language:language},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion agent log
     // This will trigger re-render when language changes
   }, [language]);
   
