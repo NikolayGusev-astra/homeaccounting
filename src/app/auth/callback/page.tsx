@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase, signInWithVK } from '@/lib/supabase'
 
@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
@@ -366,6 +366,22 @@ export default function AuthCallback() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="text-cyan-400 text-xl font-bold">
+            ⏳ Загрузка...
+          </div>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   )
 }
 
