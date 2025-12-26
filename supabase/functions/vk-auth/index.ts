@@ -155,18 +155,17 @@ serve(async (req) => {
       
       userId = newUser.user.id
       
-      // Создаем сессию для нового пользователя
-      const { data: session, error: signInError } = await supabaseAdmin.auth.signInWithPassword({
+      // Генерируем токены для нового пользователя через generateLink
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
         email,
-        password: tempPassword,
       })
       
-      if (signInError || !session.session) {
-        throw new Error('Не удалось создать сессию для нового пользователя')
-      }
+      if (linkError) throw linkError
       
-      accessToken = session.session.access_token
-      refreshToken = session.session.refresh_token
+      // Используем токены из properties
+      accessToken = linkData.properties.access_token
+      refreshToken = linkData.properties.refresh_token || ''
     }
     
     return new Response(
