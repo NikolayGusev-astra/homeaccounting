@@ -404,47 +404,6 @@ export function t(key: string): string {
   return translations[lang]?.[key] || translations['en']?.[key] || key;
 }
 
-// Hook for React components
-// This hook should only be used in client components ('use client')
-export function useTranslation() {
-  // Dynamic import to avoid SSR issues
-  // @ts-ignore - require is available in Next.js runtime
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const React = typeof window !== 'undefined' ? require('react') : null;
-  
-  if (!React) {
-    // Return a mock hook for SSR
-    return {
-      t,
-      language: 'en' as Language,
-      setLanguage: () => {},
-    };
-  }
-  
-  const [lang, setLangState] = React.useState<Language>(getLanguage());
-  
-  React.useEffect(() => {
-    // Sync with localStorage changes
-    const handleStorageChange = () => {
-      setLangState(getLanguage());
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-  
-  const changeLanguage = (newLang: Language) => {
-    setLanguage(newLang);
-    setLangState(newLang);
-    // Force re-render by updating state
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('languagechange'));
-    }
-  };
-  
-  return {
-    t,
-    language: lang,
-    setLanguage: changeLanguage,
-  };
-}
+// useTranslation hook is now exported from './useTranslation.ts' (client-only)
+// This file only exports utility functions that are safe for SSR
 

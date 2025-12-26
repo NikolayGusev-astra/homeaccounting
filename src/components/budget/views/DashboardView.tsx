@@ -13,7 +13,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils';
-import { t, useTranslation } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { useTranslation } from '@/lib/useTranslation';
 
 export default function DashboardView() {
   const { currentMonth, getMonthlyForecast, getTotalExpenses, income, expenses, settings } = useBudgetStore();

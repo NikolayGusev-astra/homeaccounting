@@ -4,7 +4,8 @@ import React from 'react';
 import { useBudgetStore } from '@/store/budgetStore';
 import { formatCurrency } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { t, useTranslation } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { useTranslation } from '@/lib/useTranslation';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const COLORS = ['#FF006E', '#00D4FF', '#39FF14', '#FFFF00', '#FF1493', '#00FF41', '#FFDE00'];

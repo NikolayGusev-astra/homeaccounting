@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TrendingUp, CreditCard } from 'lucide-react';
 import type { ExpenseCategory } from '@/types/budget';
-import { t, useTranslation } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { useTranslation } from '@/lib/useTranslation';
 
 interface QuickAddDialogProps {
   open: boolean;

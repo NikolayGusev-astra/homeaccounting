@@ -16,7 +16,8 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import type { ExpenseCategory } from '@/types/budget';
-import { t, useTranslation } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
+import { useTranslation } from '@/lib/useTranslation';
 
 const categoryIcons: Record<ExpenseCategory, any> = {
   кредиты: CreditCard,
