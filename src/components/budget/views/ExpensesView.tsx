@@ -76,6 +76,295 @@ const getSubcategoryLabel = (subcategory: string): string => {
   return t(subcategoryKeyMap[subcategory] || subcategory);
 };
 
+interface ExpenseFormProps {
+  onSubmit: (data: Omit<import('@/types/budget').Expense, 'id' | 'history' | 'createdAt'>) => void;
+  onCancel: () => void;
+  initialData?: Partial<import('@/types/budget').Expense>;
+}
+
+function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
+  // #region agent log
+  fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:78',message:'ExpenseForm component entry',data:{hasOnSubmit:typeof onSubmit === 'function',hasOnCancel:typeof onCancel === 'function',hasInitialData:!!initialData},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion agent log
+  
+  const { language } = useTranslation();
+  
+  // Force re-render on language change
+  React.useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:83',message:'ExpenseForm useEffect',data:{language:language},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion agent log
+    // This will trigger re-render when language changes
+  }, [language]);
+  
+  const [formData, setFormData] = React.useState({
+    category: initialData?.category || 'кредиты' as ExpenseCategory,
+    subcategory: initialData?.subcategory || '',
+    name: initialData?.name || '',
+    amount: initialData?.amount?.toString() || '',
+    dayOfMonth: initialData?.dayOfMonth?.toString() || '',
+    frequency: initialData?.frequency || 'monthly' as 'monthly' | 'weekly' | 'biweekly' | 'once',
+    targetMonth: initialData?.targetMonth?.toString() || '',
+    targetYear: initialData?.targetYear?.toString() || '',
+    isRequired: initialData?.isRequired ?? true,
+    notes: initialData?.notes || '',
+    isTransfer: initialData?.isTransfer || false,
+    transferType: initialData?.transferType || 'sent' as 'sent' | 'received',
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const expenseData = {
+      category: formData.category,
+      subcategory: formData.subcategory || undefined,
+      name: formData.name,
+      amount: parseFloat(formData.amount),
+      dayOfMonth: formData.dayOfMonth ? parseInt(formData.dayOfMonth) : null,
+      dueDate: null,
+      isPaid: false,
+      isRequired: formData.isRequired,
+      notes: formData.notes || undefined,
+      frequency: formData.frequency,
+      isTransfer: formData.category === 'переводы' || formData.isTransfer || undefined,
+      transferType: (formData.category === 'переводы' || formData.isTransfer) ? formData.transferType : undefined,
+    };
+
+    if (formData.frequency === 'once') {
+      (expenseData as any).targetMonth = formData.targetMonth ? parseInt(formData.targetMonth) : undefined;
+      (expenseData as any).targetYear = formData.targetYear ? parseInt(formData.targetYear) : undefined;
+    }
+
+    onSubmit(expenseData as Omit<import('@/types/budget').Expense, 'id' | 'history' | 'createdAt'>);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.category')}</label>
+        <select
+          value={formData.category}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
+          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+        >
+          <option value="кредиты">{t('category.credits')}</option>
+          <option value="коммунальные">{t('category.utilities')}</option>
+          <option value="домашние_траты">{t('category.home')}</option>
+          <option value="здоровье">{t('category.health')}</option>
+          <option value="автомобиль">{t('category.car')}</option>
+          <option value="прочее">{t('category.other')}</option>
+          <option value="переводы">{t('category.transfers')}</option>
+        </select>
+      </div>
+      
+      {/* Подкатегории для коммунальных */}
+      {formData.category === 'коммунальные' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="электро">{t('subcategory.electricity')}</option>
+            <option value="газ">{t('subcategory.gas')}</option>
+            <option value="вода">{t('subcategory.water')}</option>
+            <option value="отопление">{t('subcategory.heating')}</option>
+            <option value="интернет">{t('subcategory.internet')}</option>
+            <option value="тв">{t('subcategory.tv')}</option>
+          </select>
+        </div>
+      )}
+      
+      {/* Подкатегории для домашних трат */}
+      {formData.category === 'домашние_траты' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="продукты">{t('subcategory.groceries')}</option>
+            <option value="бытовая_химия">{t('subcategory.household')}</option>
+            <option value="косметика">{t('subcategory.cosmetics')}</option>
+            <option value="ремонт">{t('subcategory.repair')}</option>
+          </select>
+        </div>
+      )}
+      
+      {/* Подкатегории для здоровья */}
+      {formData.category === 'здоровье' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="аптека">{t('subcategory.pharmacy')}</option>
+            <option value="клиника">{t('subcategory.clinic')}</option>
+            <option value="спорт">{t('subcategory.sport')}</option>
+          </select>
+        </div>
+      )}
+      
+      {/* Подкатегории для автомобиля */}
+      {formData.category === 'автомобиль' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
+          <select
+            value={formData.subcategory}
+            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="">{t('expenses.noSubcategory')}</option>
+            <option value="ремонт_авто">{t('subcategory.carRepair')}</option>
+            <option value="заправка">{t('subcategory.gasStation')}</option>
+            <option value="обслуживание">{t('subcategory.carService')}</option>
+          </select>
+        </div>
+      )}
+      {formData.category === 'переводы' && (
+        <div>
+          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.transferType')}</label>
+          <select
+            value={formData.transferType}
+            onChange={(e) => setFormData({ ...formData, transferType: e.target.value as 'sent' | 'received' })}
+            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          >
+            <option value="sent">{t('expenses.transfer.sent')}</option>
+            <option value="received">{t('expenses.transfer.received')}</option>
+          </select>
+          <p className="text-xs text-pink-500/60 mt-1">
+            {formData.transferType === 'sent' 
+              ? t('expenses.transfer.sentDesc')
+              : t('expenses.transfer.receivedDesc')}
+          </p>
+        </div>
+      )}
+      <div>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.name')}</label>
+        <input
+          type="text"
+          required
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          placeholder={t('expenses.name')}
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.amount')}</label>
+        <input
+          type="number"
+          required
+          min="0"
+          step="0.01"
+          value={formData.amount}
+          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          placeholder="15000"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.dayOfMonth')}</label>
+        <input
+          type="number"
+          min="1"
+          max="31"
+          value={formData.dayOfMonth}
+          onChange={(e) => setFormData({ ...formData, dayOfMonth: e.target.value })}
+          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+          placeholder="15"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="checkbox"
+          id="isRequired"
+          checked={formData.isRequired}
+          onChange={(e) => setFormData({ ...formData, isRequired: e.target.checked })}
+          className="w-4 h-4 accent-pink-500"
+        />
+        <label htmlFor="isRequired" className="text-sm text-pink-400">
+          {t('expenses.isRequired')}
+        </label>
+      </div>
+      <div>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.frequency')}</label>
+        <select
+          value={formData.frequency}
+          onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
+          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+        >
+          <option value="monthly">{t('income.frequency.monthly')}</option>
+          <option value="weekly">{t('income.frequency.weekly')}</option>
+          <option value="biweekly">{t('income.frequency.biweekly')}</option>
+          <option value="once">{t('income.frequency.once')}</option>
+        </select>
+      </div>
+      {formData.frequency === 'once' && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.targetMonth')}</label>
+            <input
+              type="number"
+              min="1"
+              max="12"
+              value={formData.targetMonth}
+              onChange={(e) => setFormData({ ...formData, targetMonth: e.target.value })}
+              className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+              placeholder="12"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.year')}</label>
+            <input
+              type="number"
+              min="2024"
+              max="2050"
+              value={formData.targetYear}
+              onChange={(e) => setFormData({ ...formData, targetYear: e.target.value })}
+              className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
+              placeholder="2024"
+            />
+          </div>
+        </div>
+      )}
+      <div>
+        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.notesOptional')}</label>
+        <textarea
+          value={formData.notes}
+          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input resize-none"
+          rows={2}
+          placeholder={t('income.notesPlaceholder')}
+        />
+      </div>
+      <div className="flex gap-2 pt-4">
+        <Button
+          type="submit"
+          className="flex-1 neon-button"
+        >
+          {t('common.save')}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+          className="text-pink-400 hover:bg-pink-500/10"
+        >
+          {t('common.cancel')}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export default function ExpensesView() {
   // #region agent log
   fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:79',message:'ExpensesView component entry',data:{expenseFormDefined:typeof ExpenseForm !== 'undefined',dialogDefined:typeof Dialog !== 'undefined',buttonDefined:typeof Button !== 'undefined',badgeDefined:typeof Badge !== 'undefined',useTranslationDefined:typeof useTranslation !== 'undefined',tDefined:typeof t !== 'undefined',categoryIconsDefined:typeof categoryIcons !== 'undefined'},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'A'})}).catch(()=>{});
@@ -403,294 +692,5 @@ export default function ExpensesView() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-interface ExpenseFormProps {
-  onSubmit: (data: Omit<import('@/types/budget').Expense, 'id' | 'history' | 'createdAt'>) => void;
-  onCancel: () => void;
-  initialData?: Partial<import('@/types/budget').Expense>;
-}
-
-function ExpenseForm({ onSubmit, onCancel, initialData }: ExpenseFormProps) {
-  // #region agent log
-  fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:392',message:'ExpenseForm component entry',data:{hasOnSubmit:typeof onSubmit === 'function',hasOnCancel:typeof onCancel === 'function',hasInitialData:!!initialData},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion agent log
-  
-  const { language } = useTranslation();
-  
-  // Force re-render on language change
-  React.useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7246/ingest/62f0094b-71f7-4d08-88e9-7f3d97a8eb6c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ExpensesView.tsx:397',message:'ExpenseForm useEffect',data:{language:language},timestamp:Date.now(),sessionId:'debug-session',runId:'expenses-error-debug',hypothesisId:'F'})}).catch(()=>{});
-    // #endregion agent log
-    // This will trigger re-render when language changes
-  }, [language]);
-  
-  const [formData, setFormData] = React.useState({
-    category: initialData?.category || 'кредиты' as ExpenseCategory,
-    subcategory: initialData?.subcategory || '',
-    name: initialData?.name || '',
-    amount: initialData?.amount?.toString() || '',
-    dayOfMonth: initialData?.dayOfMonth?.toString() || '',
-    frequency: initialData?.frequency || 'monthly' as 'monthly' | 'weekly' | 'biweekly' | 'once',
-    targetMonth: initialData?.targetMonth?.toString() || '',
-    targetYear: initialData?.targetYear?.toString() || '',
-    isRequired: initialData?.isRequired ?? true,
-    notes: initialData?.notes || '',
-    isTransfer: initialData?.isTransfer || false,
-    transferType: initialData?.transferType || 'sent' as 'sent' | 'received',
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const expenseData = {
-      category: formData.category,
-      subcategory: formData.subcategory || undefined,
-      name: formData.name,
-      amount: parseFloat(formData.amount),
-      dayOfMonth: formData.dayOfMonth ? parseInt(formData.dayOfMonth) : null,
-      dueDate: null,
-      isPaid: false,
-      isRequired: formData.isRequired,
-      notes: formData.notes || undefined,
-      frequency: formData.frequency,
-      isTransfer: formData.category === 'переводы' || formData.isTransfer || undefined,
-      transferType: (formData.category === 'переводы' || formData.isTransfer) ? formData.transferType : undefined,
-    };
-
-    if (formData.frequency === 'once') {
-      (expenseData as any).targetMonth = formData.targetMonth ? parseInt(formData.targetMonth) : undefined;
-      (expenseData as any).targetYear = formData.targetYear ? parseInt(formData.targetYear) : undefined;
-    }
-
-    onSubmit(expenseData as Omit<import('@/types/budget').Expense, 'id' | 'history' | 'createdAt'>);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.category')}</label>
-        <select
-          value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
-          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-        >
-          <option value="кредиты">{t('category.credits')}</option>
-          <option value="коммунальные">{t('category.utilities')}</option>
-          <option value="домашние_траты">{t('category.home')}</option>
-          <option value="здоровье">{t('category.health')}</option>
-          <option value="автомобиль">{t('category.car')}</option>
-          <option value="прочее">{t('category.other')}</option>
-          <option value="переводы">{t('category.transfers')}</option>
-        </select>
-      </div>
-      
-      {/* Подкатегории для коммунальных */}
-      {formData.category === 'коммунальные' && (
-        <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
-          <select
-            value={formData.subcategory}
-            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          >
-            <option value="">{t('expenses.noSubcategory')}</option>
-            <option value="электро">{t('subcategory.electricity')}</option>
-            <option value="газ">{t('subcategory.gas')}</option>
-            <option value="вода">{t('subcategory.water')}</option>
-            <option value="отопление">{t('subcategory.heating')}</option>
-            <option value="интернет">{t('subcategory.internet')}</option>
-            <option value="тв">{t('subcategory.tv')}</option>
-          </select>
-        </div>
-      )}
-      
-      {/* Подкатегории для домашних трат */}
-      {formData.category === 'домашние_траты' && (
-        <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
-          <select
-            value={formData.subcategory}
-            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          >
-            <option value="">{t('expenses.noSubcategory')}</option>
-            <option value="продукты">{t('subcategory.groceries')}</option>
-            <option value="бытовая_химия">{t('subcategory.household')}</option>
-            <option value="косметика">{t('subcategory.cosmetics')}</option>
-            <option value="ремонт">{t('subcategory.repair')}</option>
-          </select>
-        </div>
-      )}
-      
-      {/* Подкатегории для здоровья */}
-      {formData.category === 'здоровье' && (
-        <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
-          <select
-            value={formData.subcategory}
-            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          >
-            <option value="">{t('expenses.noSubcategory')}</option>
-            <option value="аптека">{t('subcategory.pharmacy')}</option>
-            <option value="клиника">{t('subcategory.clinic')}</option>
-            <option value="спорт">{t('subcategory.sport')}</option>
-          </select>
-        </div>
-      )}
-      
-      {/* Подкатегории для автомобиля */}
-      {formData.category === 'автомобиль' && (
-        <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.subcategory')}</label>
-          <select
-            value={formData.subcategory}
-            onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          >
-            <option value="">{t('expenses.noSubcategory')}</option>
-            <option value="ремонт_авто">{t('subcategory.carRepair')}</option>
-            <option value="заправка">{t('subcategory.gasStation')}</option>
-            <option value="обслуживание">{t('subcategory.carService')}</option>
-          </select>
-        </div>
-      )}
-      {formData.category === 'переводы' && (
-        <div>
-          <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.transferType')}</label>
-          <select
-            value={formData.transferType}
-            onChange={(e) => setFormData({ ...formData, transferType: e.target.value as 'sent' | 'received' })}
-            className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          >
-            <option value="sent">{t('expenses.transfer.sent')}</option>
-            <option value="received">{t('expenses.transfer.received')}</option>
-          </select>
-          <p className="text-xs text-pink-500/60 mt-1">
-            {formData.transferType === 'sent' 
-              ? t('expenses.transfer.sentDesc')
-              : t('expenses.transfer.receivedDesc')}
-          </p>
-        </div>
-      )}
-      <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.name')}</label>
-        <input
-          type="text"
-          required
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          placeholder={t('expenses.name')}
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.amount')}</label>
-        <input
-          type="number"
-          required
-          min="0"
-          step="0.01"
-          value={formData.amount}
-          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          placeholder="15000"
-        />
-      </div>
-      <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('expenses.dayOfMonth')}</label>
-        <input
-          type="number"
-          min="1"
-          max="31"
-          value={formData.dayOfMonth}
-          onChange={(e) => setFormData({ ...formData, dayOfMonth: e.target.value })}
-          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-          placeholder="15"
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="isRequired"
-          checked={formData.isRequired}
-          onChange={(e) => setFormData({ ...formData, isRequired: e.target.checked })}
-          className="w-4 h-4 accent-pink-500"
-        />
-        <label htmlFor="isRequired" className="text-sm text-pink-400">
-          {t('expenses.isRequired')}
-        </label>
-      </div>
-      <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.frequency')}</label>
-        <select
-          value={formData.frequency}
-          onChange={(e) => setFormData({ ...formData, frequency: e.target.value as any })}
-          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-        >
-          <option value="monthly">{t('income.frequency.monthly')}</option>
-          <option value="weekly">{t('income.frequency.weekly')}</option>
-          <option value="biweekly">{t('income.frequency.biweekly')}</option>
-          <option value="once">{t('income.frequency.once')}</option>
-        </select>
-      </div>
-      {formData.frequency === 'once' && (
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.targetMonth')}</label>
-            <input
-              type="number"
-              min="1"
-              max="12"
-              value={formData.targetMonth}
-              onChange={(e) => setFormData({ ...formData, targetMonth: e.target.value })}
-              className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-              placeholder="12"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.year')}</label>
-            <input
-              type="number"
-              min="2024"
-              max="2050"
-              value={formData.targetYear}
-              onChange={(e) => setFormData({ ...formData, targetYear: e.target.value })}
-              className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input"
-              placeholder="2024"
-            />
-          </div>
-        </div>
-      )}
-      <div>
-        <label className="text-sm font-medium text-pink-400 mb-2 block">{t('income.notesOptional')}</label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          className="w-full px-3 py-2 bg-[#0a0a0f] border border-pink-500/30 rounded-lg text-pink-400 focus:border-pink-400 focus:outline-none neon-input resize-none"
-          rows={2}
-          placeholder={t('income.notesPlaceholder')}
-        />
-      </div>
-      <div className="flex gap-2 pt-4">
-        <Button
-          type="submit"
-          className="flex-1 neon-button"
-        >
-          {t('common.save')}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={onCancel}
-          className="text-pink-400 hover:bg-pink-500/10"
-        >
-          {t('common.cancel')}
-        </Button>
-      </div>
-    </form>
   );
 }
