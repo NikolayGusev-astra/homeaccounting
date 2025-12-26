@@ -78,6 +78,45 @@ export async function signInWithGitHub() {
   return { data, error }
 }
 
+// VK ID авторизация через Edge Function
+export async function signInWithVK(vkToken: string, vkUserData?: any) {
+  if (!supabase) {
+    throw new Error('Supabase not configured')
+  }
+
+  try {
+    // Вызываем Edge Function
+    const { data, error } = await supabase.functions.invoke('vk-auth', {
+      body: { vkToken, vkUserData }
+    })
+    
+    if (error) {
+      console.error('Edge Function error:', error)
+      throw error
+    }
+    
+    if (!data.success) {
+      throw new Error(data.error || 'VK авторизация не удалась')
+    }
+    
+    // Устанавливаем сессию с полученными токенами
+    const { error: sessionError } = await supabase.auth.setSession({
+      access_token: data.accessToken,
+      refresh_token: data.refreshToken,
+    })
+    
+    if (sessionError) {
+      console.error('Session error:', sessionError)
+      throw sessionError
+    }
+    
+    return { data, error: null }
+  } catch (error: any) {
+    console.error('VK Auth Error:', error)
+    return { data: null, error }
+  }
+}
+
 export async function signOut() {
   if (!supabase) {
     throw new Error('Supabase not configured')

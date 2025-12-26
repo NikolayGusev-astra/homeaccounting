@@ -1,11 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase, signInWithGoogle, signInWithGitHub } from '@/lib/supabase'
+import dynamic from 'next/dynamic'
+import { supabase, signInWithGoogle, signInWithGitHub, signInWithVK } from '@/lib/supabase'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Loader2 } from 'lucide-react'
+
+// Динамический импорт VKAuth с отключенным SSR
+const VKAuth = dynamic(() => import('./VKAuth').then(mod => ({ default: mod.VKAuth })), {
+  ssr: false,
+  loading: () => (
+    <div className="text-sm text-cyan-500/60 p-2">
+      Загрузка VK ID...
+    </div>
+  )
+})
 
 interface AuthDialogProps {
   open: boolean
@@ -87,6 +98,44 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
     }
   }
 
+  const handleVKAuth = async (vkData: any) => {
+    setLoading(true)
+    setMessage('')
+    try {
+      console.log('VK Auth Data:', vkData) // Для отладки
+      
+      // VK ID возвращает объект с токеном и данными пользователя
+      // Структура может быть: { token: string, user: {...} } или { access_token: string, ... }
+      const token = vkData.token || vkData.access_token || vkData.accessToken
+      if (!token) {
+        console.error('VK Data structure:', vkData)
+        throw new Error('Токен VK не получен. Проверьте структуру данных.')
+      }
+
+      // Передаем токен и данные пользователя (если есть) в Edge Function
+      const userData = vkData.user || vkData
+      const { data, error } = await signInWithVK(token, userData)
+      
+      if (error) {
+        console.error('VK Sign In Error:', error)
+        throw error
+      }
+      
+      setMessage('Авторизация через VK успешна!')
+      setMessageType('success')
+      setTimeout(() => {
+        onOpenChange(false)
+        // Обновляем страницу для обновления сессии
+        window.location.reload()
+      }, 1000)
+    } catch (error: any) {
+      console.error('VK Auth Error:', error)
+      setMessage(error.message || 'Ошибка входа через VK')
+      setMessageType('error')
+      setLoading(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-[#0d0d14] border-cyan-500/30 max-w-md">
@@ -134,6 +183,19 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
               )}
               Войти через GitHub
             </Button>
+
+            {/* VK ID виджет */}
+            <div className="w-full min-h-[50px]">
+              <VKAuth
+                onSuccess={handleVKAuth}
+                onError={(error) => {
+                  console.error('VK Auth Error in Dialog:', error)
+                  setMessage(error?.message || 'Ошибка входа через VK')
+                  setMessageType('error')
+                  setLoading(false)
+                }}
+              />
+            </div>
           </div>
 
           <div className="relative">
