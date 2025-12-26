@@ -231,41 +231,19 @@ const calculateForecast = (
   };
 };
 
-const calculateTotalExpenses = (
-  expenses: Expense[],
-  year: number,
-  month: number
-): number => {
-  let total = 0;
-
-  expenses.forEach(exp => {
-    // Для разовых платежей используем targetMonth и targetYear
-    if (exp.frequency === 'once') {
-      if (exp.targetYear === year && exp.targetMonth === month) {
-        total += exp.amount;
-      }
-      return;
-    }
-
-    // Для обычных платежей проверяем дату появления
-    // Если платеж был создан в выбранном месяце, учитываем его
-    const expenseDate = new Date(exp.createdAt);
-    if (expenseDate.getFullYear() === year && expenseDate.getMonth() + 1 === month) {
-      total += exp.amount;
-    }
-  });
-
-  return total;
-};
-
 const calculateCategoryStats = (
   expenses: Expense[],
   year: number,
   month: number
 ): CategoryStats[] => {
   const monthlyExpenses = expenses.filter(exp => {
-    const expenseDate = new Date(exp.createdAt);
-    return expenseDate.getFullYear() === year && expenseDate.getMonth() + 1 === month;
+    if (exp.frequency === 'once') {
+      // Разовые расходы - только если целевой месяц совпадает
+      return exp.targetYear === year && exp.targetMonth === month;
+    } else {
+      // Периодические расходы - всегда учитываем в текущем месяце
+      return true;
+    }
   });
 
   const statsByCategory = new Map<string, { total: number; count: number; amounts: number[] }>();
@@ -295,7 +273,7 @@ const calculateCategoryStats = (
   }));
 };
 
-const getTotalExpenses = (
+const calculateTotalExpenses = (
   expenses: Expense[],
   year: number,
   month: number
@@ -588,7 +566,7 @@ export const useBudgetStore = create<BudgetStore>()(
 
       getTotalExpenses: (year, month) => {
         const { expenses } = get();
-        return getTotalExpenses(expenses, year, month);
+        return calculateTotalExpenses(expenses, year, month);
       },
 
       // Supabase Sync methods

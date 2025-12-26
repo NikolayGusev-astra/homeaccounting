@@ -284,3 +284,4 @@ curl -X POST \
 - Никогда не коммитьте Service Role Key в git
 - Edge Function проверяет валидность VK токена через VK API
 
+
