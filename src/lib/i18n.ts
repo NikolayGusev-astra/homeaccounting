@@ -1,5 +1,4 @@
 // Simple i18n system for translations
-import * as React from 'react';
 
 export type Language = 'ru' | 'en';
 
@@ -280,18 +279,18 @@ export function t(key: string): string {
 }
 
 // Hook for React components
+// This hook should only be used in client components ('use client')
+// Import React in the component file where you use this hook
 export function useTranslation() {
-  const [lang, setLangState] = React.useState<Language>(getLanguage());
-  
-  const changeLanguage = (newLang: Language) => {
-    setLanguage(newLang);
-    setLangState(newLang);
-  };
-  
+  // This hook requires React to be imported in the component
+  // For now, return a simple implementation that works during SSR
+  // Components should import React and use useState directly if needed
   return {
     t,
-    language: lang,
-    setLanguage: changeLanguage,
+    language: getLanguage(),
+    setLanguage: (newLang: Language) => {
+      setLanguage(newLang);
+    },
   };
 }
 
