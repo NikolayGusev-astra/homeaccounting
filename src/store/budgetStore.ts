@@ -300,8 +300,8 @@ export const useBudgetStore = create<BudgetStore>()(
             history: [],
             createdAt: new Date().toISOString(),
             frequency: incomeData.frequency,
-            targetYear: incomeData.targetYear,
             targetMonth: incomeData.targetMonth,
+            targetYear: incomeData.targetYear,
             isTransfer: true,
             transferType: 'sent',
           };
@@ -337,14 +337,13 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = getCurrentUserIdSync();
           if (userId) {
-            // ИСПРАВЛЕНИЕ: Используем IIFE и проверку error вместо .then().catch()
             (async () => {
               const { error } = await supabase
                 .from('income_legacy')
                 .delete()
                 .eq('id', id)
                 .eq('user_id', userId);
-              
+
               if (error) console.error('Error deleting income:', error);
             })();
           }
@@ -394,8 +393,8 @@ export const useBudgetStore = create<BudgetStore>()(
             receivedDate: null,
             notes: expenseData.notes,
             createdAt: new Date().toISOString(),
-            targetYear: expenseData.targetYear,
             targetMonth: expenseData.targetMonth,
+            targetYear: expenseData.targetYear,
             isTransfer: true,
             transferType: 'received',
           };
@@ -413,23 +412,21 @@ export const useBudgetStore = create<BudgetStore>()(
 
       updateExpense: (id, updates) => {
         set((state) => ({
-          expenses: state.expenses.map((exp) => {
-            if (exp.id === id) {
-              return {
-                ...exp,
-                ...updates,
-                history: [
-                  ...exp.history,
-                  {
-                    date: new Date().toISOString(),
-                    amount: updates.amount ?? exp.amount,
-                    status: 'changed',
-                  },
-                ],
-              };
-            }
-            return exp;
-          }),
+          expenses: state.expenses.map((exp) =>
+            exp.id === id
+              ? {
+                  ...exp,
+                  history: [
+                    ...exp.history,
+                    {
+                      date: new Date().toISOString(),
+                      amount: updates.amount ?? exp.amount,
+                      status: 'changed',
+                    },
+                  ],
+                }
+              : exp
+          ),
         }));
 
         if (isSupabaseEnabled()) {
@@ -445,37 +442,44 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = await getCurrentUserId();
           if (userId) {
-            // ИСПРАВЛЕНИЕ: Убрали .catch(), используем проверку { error }
-            const { error } = await supabase
+            // ИСПРАВЛЕНО: Удаляем из income_legacy, проверяем ID
+            const { error: deleteError } = await supabase
+              .from('income_legacy')
+              .delete()
+              .eq('id', id)
+              .eq('user_id', userId);
+
+            // ИСПРАВЛЕНО: Удаляем из expenses_legacy, проверяем ID
+            const { error: deleteError2 } = await supabase
               .from('expenses_legacy')
               .delete()
               .eq('id', id)
               .eq('user_id', userId);
-            
-            if (error) console.error('Error deleting expense:', error);
+
+            if (deleteError) console.error('Error deleting income:', deleteError);
+            if (deleteError2) console.error('Error deleting expense:', deleteError2);
           }
         }
       },
 
       toggleExpensePaid: (id) => {
         set((state) => ({
-          expenses: state.expenses.map((exp) => {
-            if (exp.id === id) {
-              return {
-                ...exp,
-                isPaid: !exp.isPaid,
-                history: [
-                  ...exp.history,
-                  {
-                    date: new Date().toISOString(),
-                    amount: exp.amount,
-                    status: !exp.isPaid ? 'paid' : 'unpaid',
-                  },
-                ],
-              };
-            }
-            return exp;
-          }),
+          expenses: state.expenses.map((exp) =>
+            exp.id === id
+              ? {
+                  ...exp,
+                  isPaid: !exp.isPaid,
+                  history: [
+                    ...exp.history,
+                    {
+                      date: new Date().toISOString(),
+                      amount: exp.amount,
+                      status: !exp.isPaid ? 'paid' : 'unpaid',
+                    },
+                  ],
+                }
+              : exp
+          ),
         }));
 
         if (isSupabaseEnabled()) {
@@ -534,7 +538,7 @@ export const useBudgetStore = create<BudgetStore>()(
               },
             }));
           } else {
-            // Create profile if doesn't exist
+            // Создаём профиль если его нет
             await supabase.from('profiles').insert({
               id: userId,
               user_id: userId,
@@ -544,7 +548,7 @@ export const useBudgetStore = create<BudgetStore>()(
               notifications: get().settings.notifications,
               default_month: get().settings.defaultMonth,
             }).catch((error) => {
-              console.error('Error loading settings:', error);
+              console.error('Error creating profile:', error);
             });
           }
         } catch (error) {
@@ -571,7 +575,9 @@ export const useBudgetStore = create<BudgetStore>()(
               default_month: settings.defaultMonth,
             }, { onConflict: 'user_id' });
 
-          if (error) console.error('Error syncing settings:', error);
+          if (error) {
+            console.error('Error syncing settings:', error);
+          }
         } catch (error) {
           console.error('Error syncing settings:', error);
         }
@@ -704,13 +710,12 @@ export const useBudgetStore = create<BudgetStore>()(
         set({ isSyncing: true });
 
         try {
+          // Загружаем income и expenses из Supabase
           const { data: incomeData, error: incomeError } = await supabase
             .from('income_legacy')
             .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: true });
-
-          if (incomeError) console.error('Error loading income:', incomeError);
 
           const { data: expensesData, error: expensesError } = await supabase
             .from('expenses_legacy')
@@ -718,6 +723,7 @@ export const useBudgetStore = create<BudgetStore>()(
             .eq('user_id', userId)
             .order('created_at', { ascending: true });
 
+          if (incomeError) console.error('Error loading income:', incomeError);
           if (expensesError) console.error('Error loading expenses:', expensesError);
 
           const income: Income[] = (incomeData || []).map(inc => ({
@@ -730,7 +736,7 @@ export const useBudgetStore = create<BudgetStore>()(
             receivedDate: inc.received_date,
             targetMonth: inc.target_month,
             targetYear: inc.target_year,
-            notes: inc.notes || undefined,
+            notes: inc.notes,
             isTransfer: inc.is_transfer || undefined,
             transferType: inc.transfer_type || undefined,
             createdAt: inc.created_at,
@@ -740,36 +746,50 @@ export const useBudgetStore = create<BudgetStore>()(
             id: exp.id,
             name: exp.name,
             amount: Number(exp.amount),
-            category: exp.category as any,
+            category: exp.category,
             dayOfMonth: exp.day_of_month,
             frequency: exp.frequency as any,
             isPaid: exp.is_paid,
             isRequired: exp.is_required,
             targetMonth: exp.target_month,
             targetYear: exp.target_year,
-            notes: exp.notes || undefined,
+            notes: exp.notes,
             isTransfer: exp.is_transfer || undefined,
             transferType: exp.transfer_type || undefined,
-            history: [],
             createdAt: exp.created_at,
           }));
 
-          set({ income, expenses });
+          // ВАЖНОЕ: Синхронизируем только если локально данных нет или они старые
+          // Это предотвращает перезапись локальных изменений удалёнными записями
+          const localIncome = get().income;
+          const localExpenses = get().expenses;
+
+          const shouldSyncIncome = localIncome.length === 0 || (income.length > 0 && income[0]?.createdAt !== localIncome[0]?.createdAt);
+          const shouldSyncExpenses = localExpenses.length === 0 || (expenses.length > 0 && expenses[0]?.createdAt !== localExpenses[0]?.createdAt);
+
+          if (shouldSyncIncome || shouldSyncExpenses) {
+            set({
+              income: shouldSyncIncome ? income : localIncome,
+              expenses: shouldSyncExpenses ? expenses : localExpenses,
+            });
+          }
         } catch (error) {
           console.error('Error during sync from Supabase:', error);
         } finally {
           set({ isSyncing: false });
         }
       },
-    }),
-    {
-      name: 'budget-storage',
-      partialize: (state) => ({
-        income: state.income,
-        expenses: state.expenses,
-        settings: state.settings,
-        currentMonth: state.currentMonth,
-      }),
-    }
-  )
+
+      isSyncing: boolean,
+    })
+  ),
+  {
+    name: 'budget-storage',
+    partialize: (state) => ({
+      income: state.income,
+      expenses: state.expenses,
+      settings: state.settings,
+      currentMonth: state.currentMonth,
+    })
+  }
 );
