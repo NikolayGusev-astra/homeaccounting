@@ -52,7 +52,7 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
 
     // Создаем и добавляем script тег
     const script = document.createElement('script')
-    script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
+    script.src = 'https://unpkg.com/@vkid/sdk@3.0.0/dist-sdk/umd/index.js'
     script.async = true
     const scriptLoadStartTime = Date.now();
     script.onload = () => {
@@ -73,6 +73,7 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         },
         timestamp: Date.now()
       };
+      fetch('https://log-agent.example.com/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scriptLoadLogData)
@@ -101,6 +102,7 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         },
         timestamp: Date.now()
       };
+      fetch('https://log-agent.example.com/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(scriptErrorLogData)
@@ -174,6 +176,7 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
         },
         timestamp: Date.now()
       };
+      fetch('https://log-agent.example.com/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(vkInitLogData)
@@ -277,4 +280,3 @@ export function VKAuth({ onSuccess, onError, containerId = 'vkid-container' }: V
     />
   )
 }
-
