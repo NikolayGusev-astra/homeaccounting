@@ -68,18 +68,33 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       const userId = await get().getCurrentUserId();
       if (!userId) throw new Error('Not authenticated');
       
-      const { data, error } = await supabase
+      // Создаем семейный аккаунт
+      const { data: account, error: accountError } = await supabase
         .from('family_accounts')
         .insert<CreateFamilyAccountInput>({ name, created_by: userId })
         .select()
         .single();
       
-      if (error) throw error;
-      if (!data) throw new Error('Failed to create family account');
+      if (accountError) throw accountError;
+      if (!account) throw new Error('Failed to create family account');
+      
+      // Добавляем создателя как владельца (owner) семейного аккаунта
+      const { data: member, error: memberError } = await supabase
+        .from('family_members')
+        .insert<CreateFamilyMemberInput>({
+          family_account_id: account.id,
+          user_id: userId,
+          role: 'owner'
+        })
+        .select()
+        .single();
+      
+      if (memberError) throw memberError;
       
       set(state => ({
-        familyAccounts: [...state.familyAccounts, data],
-        currentFamilyAccount: data,
+        familyAccounts: [...state.familyAccounts, account],
+        familyMembers: [...state.familyMembers, member],
+        currentFamilyAccount: account,
         isLoading: false
       }));
     } catch (error) {
@@ -478,14 +493,26 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       const userId = await get().getCurrentUserId();
       if (!userId) return false;
       
-      const { data, error } = await supabase
+      // Проверяем, является ли пользователь владельцем через family_members
+      const { data: member, error: memberError } = await supabase
         .from('family_members')
         .select('role')
         .eq('family_account_id', familyAccountId)
         .eq('user_id', userId)
         .single();
       
-      return !error && data?.role === 'owner';
+      if (!memberError && member?.role === 'owner') {
+        return true;
+      }
+      
+      // Также проверяем, является ли пользователь создателем аккаунта
+      const { data: account, error: accountError } = await supabase
+        .from('family_accounts')
+        .select('created_by')
+        .eq('id', familyAccountId)
+        .single();
+      
+      return !accountError && account?.created_by === userId;
     } catch {
       return false;
     }
