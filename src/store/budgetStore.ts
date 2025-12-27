@@ -74,6 +74,7 @@ const calculateForecast = (
   const daysInMonth = new Date(year, month, 0).getDate();
   const dailyBalances: DailyBalance[] = [];
   const cashGaps: CashGap[] = [];
+
   let currentBalance = startingBalance;
   let totalIncome = 0;
   let totalExpenses = 0;
@@ -85,7 +86,7 @@ const calculateForecast = (
   // Calculate income occurrences
   income.forEach(inc => {
     const occurrences: number[] = [];
-
+    
     if (inc.frequency === 'once') {
       if (inc.targetYear === year && inc.targetMonth === month && inc.dayOfMonth) {
         occurrences.push(inc.dayOfMonth);
@@ -153,16 +154,17 @@ const calculateForecast = (
 
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
+    
     const dayIncomeTransactions = incomeOccurrences.get(day) || [];
     const incomeAmount = dayIncomeTransactions.reduce((sum, inc) => inc.received ? sum + inc.amount : sum, 0);
     const incomeAmountAll = dayIncomeTransactions.reduce((sum, inc) => sum + inc.amount, 0);
-
+    
     const dayExpenseTransactions = expenseOccurrences.get(day) || [];
     const expenseAmount = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0);
     const expenseAmountAll = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0);
 
     currentBalance += incomeAmount - expenseAmount;
+    
     const isCashGap = currentBalance < 0;
 
     totalIncome += incomeAmount;
@@ -282,7 +284,7 @@ export const useBudgetStore = create<BudgetStore>()(
           id: generateId(),
           createdAt: new Date().toISOString(),
         };
-        
+
         let newExpense: Expense | null = null;
         if (incomeData.isTransfer && incomeData.transferType === 'sent') {
           newExpense = {
@@ -304,12 +306,12 @@ export const useBudgetStore = create<BudgetStore>()(
             transferType: 'sent',
           };
         }
-        
+
         set((state) => ({
           income: [...state.income, newIncome],
           expenses: newExpense ? [...state.expenses, newExpense] : state.expenses,
         }));
-        
+
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -321,7 +323,7 @@ export const useBudgetStore = create<BudgetStore>()(
             inc.id === id ? { ...inc, ...updates } : inc
           ),
         }));
-        
+
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -331,11 +333,20 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           income: state.income.filter((inc) => inc.id !== id),
         }));
-        
+
         if (isSupabaseEnabled() && supabase) {
           const userId = getCurrentUserIdSync();
           if (userId) {
-            supabase.from('income_legacy').delete().eq('id', id).eq('user_id', userId).then().catch(console.error);
+            // ИСПРАВЛЕНИЕ: Используем IIFE и проверку error вместо .then().catch()
+            (async () => {
+              const { error } = await supabase
+                .from('income_legacy')
+                .delete()
+                .eq('id', id)
+                .eq('user_id', userId);
+              
+              if (error) console.error('Error deleting income:', error);
+            })();
           }
         }
       },
@@ -352,7 +363,7 @@ export const useBudgetStore = create<BudgetStore>()(
               : inc
           ),
         }));
-        
+
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -363,16 +374,14 @@ export const useBudgetStore = create<BudgetStore>()(
         const newExpense: Expense = {
           ...expenseData,
           id: generateId(),
-          history: [
-            {
-              date: now.toISOString(),
-              amount: expenseData.amount,
-              status: 'planned',
-            },
-          ],
+          history: [{
+            date: now.toISOString(),
+            amount: expenseData.amount,
+            status: 'planned',
+          }],
           createdAt: now.toISOString(),
         };
-        
+
         let newIncome: Income | null = null;
         if (expenseData.isTransfer && expenseData.transferType === 'received') {
           newIncome = {
@@ -391,12 +400,12 @@ export const useBudgetStore = create<BudgetStore>()(
             transferType: 'received',
           };
         }
-        
+
         set((state) => ({
           expenses: [...state.expenses, newExpense],
           income: newIncome ? [...state.income, newIncome] : state.income,
         }));
-        
+
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -404,23 +413,25 @@ export const useBudgetStore = create<BudgetStore>()(
 
       updateExpense: (id, updates) => {
         set((state) => ({
-          expenses: state.expenses.map((exp) =>
-            exp.id === id
-              ? {
-                  ...exp,
-                  history: [
-                    ...exp.history,
-                    {
-                      date: new Date().toISOString(),
-                      amount: updates.amount ?? exp.amount,
-                      status: 'changed',
-                    },
-                  ],
-                }
-              : exp
-          ),
+          expenses: state.expenses.map((exp) => {
+            if (exp.id === id) {
+              return {
+                ...exp,
+                ...updates,
+                history: [
+                  ...exp.history,
+                  {
+                    date: new Date().toISOString(),
+                    amount: updates.amount ?? exp.amount,
+                    status: 'changed',
+                  },
+                ],
+              };
+            }
+            return exp;
+          }),
         }));
-        
+
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -430,35 +441,43 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           expenses: state.expenses.filter((exp) => exp.id !== id),
         }));
-        
+
         if (isSupabaseEnabled() && supabase) {
           const userId = await getCurrentUserId();
           if (userId) {
-            await supabase.from('expenses_legacy').delete().eq('id', id).eq('user_id', userId).catch(console.error);
+            // ИСПРАВЛЕНИЕ: Убрали .catch(), используем проверку { error }
+            const { error } = await supabase
+              .from('expenses_legacy')
+              .delete()
+              .eq('id', id)
+              .eq('user_id', userId);
+            
+            if (error) console.error('Error deleting expense:', error);
           }
         }
       },
 
       toggleExpensePaid: (id) => {
         set((state) => ({
-          expenses: state.expenses.map((exp) =>
-            exp.id === id
-              ? {
-                  ...exp,
-                  isPaid: !exp.isPaid,
-                  history: [
-                    ...exp.history,
-                    {
-                      date: new Date().toISOString(),
-                      amount: exp.amount,
-                      status: !exp.isPaid ? 'paid' : 'unpaid',
-                    },
-                  ],
-                }
-              : exp
-          ),
+          expenses: state.expenses.map((exp) => {
+            if (exp.id === id) {
+              return {
+                ...exp,
+                isPaid: !exp.isPaid,
+                history: [
+                  ...exp.history,
+                  {
+                    date: new Date().toISOString(),
+                    amount: exp.amount,
+                    status: !exp.isPaid ? 'paid' : 'unpaid',
+                  },
+                ],
+              };
+            }
+            return exp;
+          }),
         }));
-        
+
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -466,14 +485,18 @@ export const useBudgetStore = create<BudgetStore>()(
 
       addActualExpense: (expenseId, actualExpenseData) => {
         set((state) => ({
-          expenses: state.expenses.map((exp) =>
-            exp.id === expenseId
-              ? {
-                  ...exp,
-                  actualExpenses: [...(exp.actualExpenses || []), actualExpenseData],
-                }
-              : exp
-          ),
+          expenses: state.expenses.map((exp) => {
+            if (exp.id === expenseId) {
+              return {
+                ...exp,
+                actualExpenses: [
+                  ...(exp.actualExpenses || []),
+                  actualExpenseData,
+                ],
+              };
+            }
+            return exp;
+          }),
         }));
       },
 
@@ -489,7 +512,7 @@ export const useBudgetStore = create<BudgetStore>()(
 
       loadSettings: async () => {
         if (!isSupabaseEnabled() || !supabase) return;
-        
+
         const userId = await getCurrentUserId();
         if (!userId) return;
 
@@ -508,9 +531,10 @@ export const useBudgetStore = create<BudgetStore>()(
                 theme: profile.theme || 'dark-neon',
                 notifications: profile.notifications ?? true,
                 defaultMonth: profile.default_month || 'current',
-              }
+              },
             }));
           } else {
+            // Create profile if doesn't exist
             await supabase.from('profiles').insert({
               id: userId,
               user_id: userId,
@@ -519,6 +543,8 @@ export const useBudgetStore = create<BudgetStore>()(
               theme: get().settings.theme,
               notifications: get().settings.notifications,
               default_month: get().settings.defaultMonth,
+            }).catch((error) => {
+              console.error('Error loading settings:', error);
             });
           }
         } catch (error) {
@@ -528,12 +554,12 @@ export const useBudgetStore = create<BudgetStore>()(
 
       syncSettings: async () => {
         if (!isSupabaseEnabled() || !supabase) return;
-        
+
         const userId = await getCurrentUserId();
         if (!userId) return;
 
         try {
-          const { settings } = get();
+          const settings = get().settings;
           const { error } = await supabase
             .from('profiles')
             .upsert({
@@ -543,13 +569,9 @@ export const useBudgetStore = create<BudgetStore>()(
               theme: settings.theme,
               notifications: settings.notifications,
               default_month: settings.defaultMonth,
-            }, {
-              onConflict: 'user_id'
-            });
+            }, { onConflict: 'user_id' });
 
-          if (error) {
-            console.error('Error syncing settings:', error);
-          }
+          if (error) console.error('Error syncing settings:', error);
         } catch (error) {
           console.error('Error syncing settings:', error);
         }
@@ -575,7 +597,7 @@ export const useBudgetStore = create<BudgetStore>()(
         set({
           income: data.income || [],
           expenses: data.expenses || [],
-          settings: data.settings || get().settings,
+          settings: { ...data.settings, ...get().settings },
           currentMonth: data.currentMonth || getCurrentMonth(),
         });
       },
@@ -611,7 +633,7 @@ export const useBudgetStore = create<BudgetStore>()(
 
         try {
           const { income, expenses } = get();
-
+          
           if (income.length > 0) {
             const incomeData = income.map(inc => ({
               id: inc.id,
@@ -633,9 +655,7 @@ export const useBudgetStore = create<BudgetStore>()(
               .from('income_legacy')
               .upsert(incomeData);
 
-            if (incomeError) {
-              console.error('Error syncing income:', incomeError);
-            }
+            if (incomeError) console.error('Error syncing income:', incomeError);
           }
 
           if (expenses.length > 0) {
@@ -660,9 +680,7 @@ export const useBudgetStore = create<BudgetStore>()(
               .from('expenses_legacy')
               .upsert(expensesData);
 
-            if (expensesError) {
-              console.error('Error syncing expenses:', expensesError);
-            }
+            if (expensesError) console.error('Error syncing expenses:', expensesError);
           }
         } catch (error) {
           console.error('Error during sync:', error);
@@ -692,9 +710,7 @@ export const useBudgetStore = create<BudgetStore>()(
             .eq('user_id', userId)
             .order('created_at', { ascending: true });
 
-          if (incomeError) {
-            console.error('Error loading income:', incomeError);
-          }
+          if (incomeError) console.error('Error loading income:', incomeError);
 
           const { data: expensesData, error: expensesError } = await supabase
             .from('expenses_legacy')
@@ -702,9 +718,7 @@ export const useBudgetStore = create<BudgetStore>()(
             .eq('user_id', userId)
             .order('created_at', { ascending: true });
 
-          if (expensesError) {
-            console.error('Error loading expenses:', expensesError);
-          }
+          if (expensesError) console.error('Error loading expenses:', expensesError);
 
           const income: Income[] = (incomeData || []).map(inc => ({
             id: inc.id,
