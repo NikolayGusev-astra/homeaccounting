@@ -363,9 +363,8 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           income: state.income.filter((inc) => inc.id !== id),
         }));
-        // Автоматическая синхронизация с Supabase
+        // Удаляем с Supabase, но НЕ вызываем syncToSupabase() чтобы не перезаписать данные
         if (isSupabaseEnabled() && supabase) {
-          // Используем синхронную версию для быстрой операции
           const userId = getCurrentUserIdSync();
           if (userId) {
             supabase.from('income').delete().eq('id', id).eq('user_id', userId).catch(console.error);
@@ -468,9 +467,8 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           expenses: state.expenses.filter((exp) => exp.id !== id),
         }));
-        // Автоматическая синхронизация с Supabase
+        // Удаляем с Supabase, но НЕ вызываем syncToSupabase() чтобы не перезаписать данные
         if (isSupabaseEnabled() && supabase) {
-          // Используем синхронную версию для быстрой операции
           const userId = getCurrentUserIdSync();
           if (userId) {
             supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);

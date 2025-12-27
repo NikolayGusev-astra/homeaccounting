@@ -265,14 +265,13 @@ function IncomeForm({ onSubmit, onCancel, initialData }: IncomeFormProps) {
       amount: parseFloat(formData.amount),
       dayOfMonth: parseInt(formData.dayOfMonth),
       frequency: formData.frequency,
-      received: initialData?.received ?? false, // При редактировании сохраняем исходный статус, при создании - false
-      receivedDate: initialData?.received ? initialData.receivedDate : null, // При редактировании сохраняем исходную дату, при создании - null
+      received: initialData?.received ?? false,
+      receivedDate: initialData?.received ? initialData.receivedDate : null,
       notes: formData.notes || undefined,
       isTransfer: formData.isTransfer || undefined,
       transferType: formData.isTransfer ? formData.transferType : undefined,
     };
 
-    // Добавляем поля targetMonth и targetYear только для разовых платежей
     if (formData.frequency === 'once') {
       (incomeData as any).targetMonth = formData.targetMonth ? parseInt(formData.targetMonth) : undefined;
       (incomeData as any).targetYear = formData.targetYear ? parseInt(formData.targetYear) : undefined;
