@@ -19,32 +19,6 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // #region agent log
-        const callbackLogData = {
-          location: 'auth/callback/page.tsx:13',
-          message: 'Auth callback page load',
-          data: {
-            origin: window.location.origin,
-            hostname: window.location.hostname,
-            pathname: window.location.pathname,
-            search: window.location.search,
-            hasCode: !!searchParams.get('code'),
-            hasState: !!searchParams.get('state'),
-            hasError: !!searchParams.get('error'),
-            timestamp: Date.now(),
-            sessionId: 'debug-session',
-            runId: 'vk-auth-debug',
-            hypothesisId: 'A'
-          },
-          timestamp: Date.now()
-        };
-        fetch('https://log-agent.example.com/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(callbackLogData)
-        }).catch(() => {});
-        // #endregion agent log
-        
         // Проверяем, есть ли параметры VK OAuth в URL
         const vkCode = searchParams.get('code')
         const vkState = searchParams.get('state')
@@ -52,27 +26,6 @@ function AuthCallbackContent() {
         
         // Если есть ошибка от VK
         if (vkError) {
-          // #region agent log
-          const errorLogData = {
-            location: 'auth/callback/page.tsx:30',
-            message: 'VK OAuth error in URL',
-            data: {
-              origin: window.location.origin,
-              error: vkError,
-              errorDescription: searchParams.get('error_description'),
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'vk-auth-debug',
-              hypothesisId: 'B'
-            },
-            timestamp: Date.now()
-          };
-          fetch('https://log-agent.example.com/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(errorLogData)
-          }).catch(() => {});
-          // #endregion agent log
           setStatus('error')
           setMessage(`Ошибка VK авторизации: ${vkError}`)
           setTimeout(() => router.push('/'), 3000)
@@ -81,28 +34,6 @@ function AuthCallbackContent() {
         
         // Если есть code от VK OAuth, обрабатываем его
         if (vkCode && vkState) {
-          // #region agent log
-          const vkCodeLogData = {
-            location: 'auth/callback/page.tsx:50',
-            message: 'VK OAuth code received',
-            data: {
-              origin: window.location.origin,
-              hasCode: true,
-              hasState: true,
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'vk-auth-debug',
-              hypothesisId: 'C'
-            },
-            timestamp: Date.now()
-          };
-          fetch('https://log-agent.example.com/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(vkCodeLogData)
-          }).catch(() => {});
-          // #endregion agent log
-          
           // Загружаем VK ID SDK если еще не загружен
           if (!window.VKIDSDK) {
             await new Promise((resolve, reject) => {
@@ -160,76 +91,8 @@ function AuthCallbackContent() {
             localStorage.setItem('vk_device_id', deviceId)
           }
           
-          // #region agent log
-          const deviceIdLogData = {
-            location: 'auth/callback/page.tsx:155',
-            message: 'VK device_id handling',
-            data: {
-              origin: window.location.origin,
-              hasDeviceId: !!deviceId,
-              deviceIdSource: localStorage.getItem('vk_device_id') ? 'localStorage' : 'generated',
-              timestamp: Date.now(),
-              sessionId: 'debug-session',
-              runId: 'vk-auth-debug',
-              hypothesisId: 'G'
-            },
-            timestamp: Date.now()
-          };
-          fetch('https://log-agent.example.com/log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(deviceIdLogData)
-          }).catch(() => {});
-          // #endregion agent log
-          
           try {
-            // #region agent log
-            const beforeExchangeLogData = {
-              location: 'auth/callback/page.tsx:175',
-              message: 'Before VK code exchange',
-              data: {
-                origin: window.location.origin,
-                hasCode: !!vkCode,
-                hasDeviceId: !!deviceId,
-                codeLength: vkCode?.length || 0,
-                deviceIdLength: deviceId?.length || 0,
-                timestamp: Date.now(),
-                sessionId: 'debug-session',
-                runId: 'vk-auth-debug',
-                hypothesisId: 'H'
-              },
-              timestamp: Date.now()
-            };
-            fetch('https://log-agent.example.com/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(beforeExchangeLogData)
-            }).catch(() => {});
-            // #endregion agent log
-            
             const vkTokenData = await VKID.Auth.exchangeCode(vkCode, deviceId)
-            
-            // #region agent log
-            const exchangeLogData = {
-              location: 'auth/callback/page.tsx:195',
-              message: 'VK code exchange success',
-              data: {
-                origin: window.location.origin,
-                hasToken: !!vkTokenData?.token || !!vkTokenData?.access_token,
-                tokenDataKeys: vkTokenData ? Object.keys(vkTokenData) : [],
-                timestamp: Date.now(),
-                sessionId: 'debug-session',
-                runId: 'vk-auth-debug',
-                hypothesisId: 'D'
-              },
-              timestamp: Date.now()
-            };
-            fetch('https://log-agent.example.com/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(exchangeLogData)
-            }).catch(() => {});
-            // #endregion agent log
             
             // Используем токен для авторизации через Supabase
             const token = vkTokenData?.token || vkTokenData?.access_token || vkTokenData?.accessToken
@@ -240,26 +103,6 @@ function AuthCallbackContent() {
             const { data: vkAuthData, error: vkAuthError } = await signInWithVK(token, vkTokenData)
             
             if (vkAuthError) {
-              // #region agent log
-              const vkAuthErrorLogData = {
-                location: 'auth/callback/page.tsx:95',
-                message: 'VK signInWithVK error',
-                data: {
-                  origin: window.location.origin,
-                  error: vkAuthError.message || String(vkAuthError),
-                  timestamp: Date.now(),
-                  sessionId: 'debug-session',
-                  runId: 'vk-auth-debug',
-                  hypothesisId: 'E'
-                },
-                timestamp: Date.now()
-              };
-              fetch('https://log-agent.example.com/log', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(vkAuthErrorLogData)
-              }).catch(() => {});
-              // #endregion agent log
               throw vkAuthError
             }
             
@@ -273,32 +116,6 @@ function AuthCallbackContent() {
             }, 1000)
             return
           } catch (error: any) {
-            // #region agent log
-            const exchangeErrorLogData = {
-              location: 'auth/callback/page.tsx:225',
-              message: 'VK code exchange error',
-              data: {
-                origin: window.location.origin,
-                error: error.message || String(error),
-                errorName: error.name,
-                errorStack: error.stack?.substring(0, 500),
-                errorCode: error.code,
-                errorDetails: error.details || error.data,
-                hasCode: !!vkCode,
-                hasDeviceId: !!deviceId,
-                timestamp: Date.now(),
-                sessionId: 'debug-session',
-                runId: 'vk-auth-debug',
-                hypothesisId: 'F'
-              },
-              timestamp: Date.now()
-            };
-            fetch('https://log-agent.example.com/log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(exchangeErrorLogData)
-            }).catch(() => {});
-            // #endregion agent log
             setStatus('error')
             setMessage(`Ошибка обмена кода VK: ${error.message || 'Неизвестная ошибка'}`)
             setTimeout(() => router.push('/'), 3000)
