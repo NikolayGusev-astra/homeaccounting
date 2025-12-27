@@ -30,6 +30,7 @@ import ExpensesView from './views/ExpensesView';
 import AnalyticsView from './views/AnalyticsView';
 import { AuthDialog } from '@/components/auth/AuthDialog';
 import { QuickAddDialog } from './QuickAddDialog';
+import { ProFeatureDialog } from './ProFeatureDialog';
 import { supabase, getCurrentUser, signOut } from '@/lib/supabase';
 import { t, setLanguage, getLanguage } from '@/lib/i18n';
 import { useTranslation } from '@/lib/useTranslation';
@@ -41,6 +42,7 @@ export default function DashboardLayout() {
   const [user, setUser] = useState<any>(null);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quickAddDialogOpen, setQuickAddDialogOpen] = useState(false);
+  const [proFeatureOpen, setProFeatureOpen] = useState(false);
   const { language, setLanguage: changeLanguage } = useTranslation();
   const [forceUpdate, setForceUpdate] = useState(0);
   
@@ -77,8 +79,11 @@ export default function DashboardLayout() {
 
   // Handle navigation clicks
   const handleNavClick = (item: any) => {
-    if (item.external) {
-      // External navigation - go to family page
+    if (item.external && item.id === 'family') {
+      // Show Pro feature dialog for family budget
+      setProFeatureOpen(true);
+    } else if (item.external) {
+      // External navigation
       window.location.href = '/family';
     } else {
       setCurrentView(item.id);
@@ -390,6 +395,9 @@ export default function DashboardLayout() {
       
       {/* Quick Add Dialog (long press на мобильных) */}
       <QuickAddDialog open={quickAddDialogOpen} onOpenChange={setQuickAddDialogOpen} />
+      
+      {/* Pro Feature Dialog */}
+      <ProFeatureDialog open={proFeatureOpen} onOpenChange={setProFeatureOpen} />
     </div>
   );
 }

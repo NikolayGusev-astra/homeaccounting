@@ -197,10 +197,21 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       
       if (error) throw error;
       
-      // Временное решение: выводим ссылку в консоль для тестирования
-      const inviteLink = `${window.location.origin}/family/accept?code=${data.id}`;
-      console.log('📧 Приглашение создано! Ссылка:', inviteLink);
-      alert(`Приглашение отправлено!\n\nСсылка для тестирования:\n${inviteLink}`);
+      // Отправляем письмо с приглашением через Supabase Edge Function
+      const appUrl = window.location.origin;
+      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
+        body: {
+          invitationId: data.id,
+          familyAccountName: '', // Будет получено в edge function
+          invitedBy: userId,
+          appUrl
+        }
+      });
+
+      if (emailError) {
+        console.error('Failed to send invitation email:', emailError);
+        // Не прерываем процесс, приглашение уже создано
+      }
       
       set(state => ({
         invitations: [...state.invitations, data],
