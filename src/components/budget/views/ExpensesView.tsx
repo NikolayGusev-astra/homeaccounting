@@ -544,7 +544,7 @@ export default function ExpensesView() {
           </Card>
         ) : (
           filteredExpenses.map((exp) => {
-            const CategoryIcon = categoryIcons[exp.category];
+            const CategoryIcon = categoryIcons[exp.category] || MoreHorizontal;
             return (
               <Card key={exp.id} className="neon-card">
                 <CardContent className="p-6">
