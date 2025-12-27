@@ -282,6 +282,7 @@ export default function DashboardLayout() {
                 handleExport={handleExport}
                 handleImport={handleImport}
                 settings={settings}
+                updateSettings={updateSettings}
                 handleManualSync={handleManualSync}
                 user={user}
                 onSignIn={() => setAuthDialogOpen(true)}
