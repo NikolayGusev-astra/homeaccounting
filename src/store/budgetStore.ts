@@ -22,7 +22,7 @@ interface BudgetStore {
   // Actions - Income
   addIncome: (income: Omit<Income, 'id' | 'createdAt'>) => void;
   updateIncome: (id: string, updates: Partial<Income>) => void;
-  deleteIncome: (id: string) => void;
+  deleteIncome: (id: string) => Promise<void>;
   toggleIncomeReceived: (id: string) => void;
 
   // Actions - Expenses
@@ -329,23 +329,32 @@ export const useBudgetStore = create<BudgetStore>()(
         }
       },
 
-      deleteIncome: (id) => {
+      deleteIncome: async (id) => {
+        // First delete from local state
         set((state) => ({
           income: state.income.filter((inc) => inc.id !== id),
         }));
 
+        // Then delete from Supabase if enabled
         if (isSupabaseEnabled() && supabase) {
-          const userId = getCurrentUserIdSync();
-          if (userId) {
-            (async () => {
+          try {
+            const userId = await getCurrentUserId();
+            if (userId) {
               const { error } = await supabase
                 .from('income_legacy')
                 .delete()
                 .eq('id', id)
                 .eq('user_id', userId);
 
-              if (error) console.error('Error deleting income:', error);
-            })();
+              if (error) {
+                console.error('Error deleting income from Supabase:', error);
+                throw error;
+              }
+            }
+          } catch (error) {
+            console.error('Failed to delete income:', error);
+            // Re-sync from Supabase to ensure consistency
+            await get().syncFromSupabase();
           }
         }
       },

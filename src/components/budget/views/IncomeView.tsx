@@ -23,6 +23,7 @@ export default function IncomeView() {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingIncome, setEditingIncome] = React.useState<any>(null);
   const [filter, setFilter] = React.useState<'all' | 'received' | 'unreceived'>('all');
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   // Получаем выбранный месяц и год с проверкой
   const { selectedYear, selectedMonth } = React.useMemo(() => {
@@ -180,7 +181,17 @@ export default function IncomeView() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => deleteIncome(inc.id)}
+                        onClick={async () => {
+                          setDeletingId(inc.id);
+                          try {
+                            await deleteIncome(inc.id);
+                          } catch (error) {
+                            console.error('Failed to delete income:', error);
+                          } finally {
+                            setDeletingId(null);
+                          }
+                        }}
+                        disabled={deletingId === inc.id}
                         className="text-red-400 hover:bg-red-500/10"
                       >
                         <Trash2 className="h-4 w-4" />
