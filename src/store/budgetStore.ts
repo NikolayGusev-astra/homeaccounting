@@ -33,7 +33,7 @@ interface BudgetStore {
   addActualExpense: (expenseId: string, actualExpense: { date: string; amount: number; items?: string }) => void;
 
   // Actions - Settings
-  updateSettings: (settings: Partial<AppSettings>) => void;
+  updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
   setCurrentMonth: (month: string) => void;
   exportData: () => BudgetData;
   importData: (data: BudgetData) => void;
@@ -543,13 +543,13 @@ export const useBudgetStore = create<BudgetStore>()(
       },
 
       // Settings actions
-      updateSettings: (settings) => {
+      updateSettings: async (settings) => {
         set((state) => ({
           settings: { ...state.settings, ...settings },
         }));
         // Автоматическая синхронизация настроек
         if (isSupabaseEnabled()) {
-          get().syncSettings().catch(console.error);
+          await get().syncSettings().catch(console.error);
         }
       },
 
