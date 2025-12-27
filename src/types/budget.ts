@@ -143,6 +143,7 @@ export interface AppSettings {
   notifications: boolean;
   defaultMonth: 'current' | 'next';
   initialBalance?: number; // Начальный баланс для нового пользователя
+  accountingStartDate?: string | null; // Дата начала учёта финансов
 }
 
 export interface BudgetData {

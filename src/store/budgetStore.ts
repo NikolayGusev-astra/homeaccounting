@@ -38,6 +38,10 @@ interface BudgetStore {
   exportData: () => BudgetData;
   importData: (data: BudgetData) => void;
 
+  // Actions - Settings Sync
+  syncSettings: () => Promise<void>;
+  loadSettings: () => Promise<void>;
+
   // Actions - Supabase Sync
   syncToSupabase: () => Promise<void>;
   syncFromSupabase: () => Promise<void>;
@@ -65,7 +69,8 @@ const calculateForecast = (
   expenses: Expense[],
   year: number,
   month: number,
-  startingBalance: number = 0
+  startingBalance: number = 0,
+  accountingStartDate?: string | null
 ): MonthlyForecast => {
   // #region agent log
   // #endregion
@@ -75,6 +80,9 @@ const calculateForecast = (
   let currentBalance = startingBalance;
   let totalIncome = 0;
   let totalExpenses = 0;
+
+  // Парсим дату начала учёта
+  const accountingStart = accountingStartDate ? new Date(accountingStartDate) : null;
 
   // Pre-calculate all payment occurrences for entire month
   const incomeOccurrences = new Map<number, Income[]>();
@@ -90,20 +98,30 @@ const calculateForecast = (
         occurrences.push(inc.dayOfMonth);
       }
     } else if (inc.frequency === 'monthly') {
-      occurrences.push(inc.dayOfMonth);
+      // Для ежемесячных: проверяем, не создан ли платеж ДО начала учёта
+      if (!accountingStart || 
+          new Date(year, month, inc.dayOfMonth) >= accountingStart) {
+        occurrences.push(inc.dayOfMonth);
+      }
     } else if (inc.frequency === 'weekly') {
       // Every 7 days starting from dayOfMonth
       for (let i = 0; i < 5; i++) {
         const occurrenceDay = inc.dayOfMonth + (i * 7);
         if (occurrenceDay > daysInMonth) break;
-        occurrences.push(occurrenceDay);
+        const occurrenceDate = new Date(year, month, occurrenceDay);
+        if (!accountingStart || occurrenceDate >= accountingStart) {
+          occurrences.push(occurrenceDay);
+        }
       }
     } else if (inc.frequency === 'biweekly') {
       // Every 14 days starting from dayOfMonth
       for (let i = 0; i < 3; i++) {
         const occurrenceDay = inc.dayOfMonth + (i * 14);
         if (occurrenceDay > daysInMonth) break;
-        occurrences.push(occurrenceDay);
+        const occurrenceDate = new Date(year, month, occurrenceDay);
+        if (!accountingStart || occurrenceDate >= accountingStart) {
+          occurrences.push(occurrenceDay);
+        }
       }
     }
 
@@ -131,13 +149,17 @@ const calculateForecast = (
         // #endregion
       }
     } else if (frequency === 'monthly') {
-      if (exp.dayOfMonth) {
-        occurrences.push(exp.dayOfMonth);
-        // #region agent log
-        // #endregion
-      } else {
-        // #region agent log
-        // #endregion
+      // Для ежемесячных: проверяем, не создан ли платеж ДО начала учёта
+      if (!accountingStart || 
+          new Date(year, month, exp.dayOfMonth || 1) >= accountingStart) {
+        if (exp.dayOfMonth) {
+          occurrences.push(exp.dayOfMonth);
+          // #region agent log
+          // #endregion
+        } else {
+          // #region agent log
+          // #endregion
+        }
       }
     } else if (frequency === 'weekly') {
       // Every 7 days starting from dayOfMonth (default to day 1 if not set)
@@ -145,7 +167,10 @@ const calculateForecast = (
       for (let i = 0; i < 5; i++) {
         const occurrenceDay = baseDay + (i * 7);
         if (occurrenceDay > daysInMonth) break;
-        occurrences.push(occurrenceDay);
+        const occurrenceDate = new Date(year, month, occurrenceDay);
+        if (!accountingStart || occurrenceDate >= accountingStart) {
+          occurrences.push(occurrenceDay);
+        }
       }
     } else if (frequency === 'biweekly') {
       // Every 14 days starting from dayOfMonth (default to day 1 if not set)
@@ -153,7 +178,10 @@ const calculateForecast = (
       for (let i = 0; i < 3; i++) {
         const occurrenceDay = baseDay + (i * 14);
         if (occurrenceDay > daysInMonth) break;
-        occurrences.push(occurrenceDay);
+        const occurrenceDate = new Date(year, month, occurrenceDay);
+        if (!accountingStart || occurrenceDate >= accountingStart) {
+          occurrences.push(occurrenceDay);
+        }
       }
     }
 
@@ -519,6 +547,84 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           settings: { ...state.settings, ...settings },
         }));
+        // Автоматическая синхронизация настроек
+        if (isSupabaseEnabled()) {
+          get().syncSettings().catch(console.error);
+        }
+      },
+
+      // Загрузка настроек из Supabase
+      loadSettings: async () => {
+        if (!isSupabaseEnabled() || !supabase) return;
+        
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+
+          if (profile) {
+            set((state) => ({
+              settings: {
+                currency: profile.currency || 'RUB',
+                locale: profile.locale || 'ru-RU',
+                theme: profile.theme || 'dark-neon',
+                notifications: profile.notifications ?? true,
+                defaultMonth: profile.default_month || 'current',
+                accountingStartDate: profile.accounting_start_date,
+              }
+            }));
+          } else {
+            // Создаём профиль если его нет
+            await supabase.from('profiles').insert({
+              id: userId,
+              user_id: userId,
+              currency: get().settings.currency,
+              locale: get().settings.locale,
+              theme: get().settings.theme,
+              notifications: get().settings.notifications,
+              default_month: get().settings.defaultMonth,
+              accounting_start_date: get().settings.accountingStartDate,
+            });
+          }
+        } catch (error) {
+          console.error('Error loading settings:', error);
+        }
+      },
+
+      // Синхронизация настроек с Supabase
+      syncSettings: async () => {
+        if (!isSupabaseEnabled() || !supabase) return;
+        
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        try {
+          const { settings } = get();
+          const { error } = await supabase
+            .from('profiles')
+            .upsert({
+              user_id: userId,
+              accounting_start_date: settings.accountingStartDate,
+              currency: settings.currency,
+              locale: settings.locale,
+              theme: settings.theme,
+              notifications: settings.notifications,
+              default_month: settings.defaultMonth,
+            }, {
+              onConflict: 'user_id'
+            });
+
+          if (error) {
+            console.error('Error syncing settings:', error);
+          }
+        } catch (error) {
+          console.error('Error syncing settings:', error);
+        }
       },
 
       setCurrentMonth: (month) => {
@@ -548,8 +654,8 @@ export const useBudgetStore = create<BudgetStore>()(
 
       // Computed implementations
       getMonthlyForecast: (year, month, startingBalance = 0) => {
-        const { income, expenses } = get();
-        return calculateForecast(income, expenses, year, month, startingBalance);
+        const { income, expenses, settings } = get();
+        return calculateForecast(income, expenses, year, month, startingBalance, settings.accountingStartDate);
       },
 
       getCategoryStats: (year, month) => {

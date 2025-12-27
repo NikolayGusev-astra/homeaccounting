@@ -416,6 +416,7 @@ interface NavContentProps {
   handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleManualSync?: () => void;
   settings: any;
+  updateSettings: (settings: any) => void;
   user?: any;
   onSignIn?: () => void;
   onSignOut?: () => void;
@@ -432,6 +433,7 @@ function NavContent({
   handleImport,
   handleManualSync,
   settings,
+  updateSettings,
   user,
   onSignIn,
   onSignOut,
@@ -515,6 +517,22 @@ function NavContent({
               {t('common.sync')}
             </Button>
           )}
+          
+          {/* Accounting Start Date */}
+          <div className="px-4 space-y-2 pt-2">
+            <label className="text-sm font-medium text-cyan-400 block">
+              Дата начала учёта финансов
+            </label>
+            <input
+              type="date"
+              value={settings.accountingStartDate || ''}
+              onChange={(e) => updateSettings({ accountingStartDate: e.target.value || null })}
+              className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
+            />
+            <p className="text-xs text-cyan-500/60">
+              Ежемесячные платежи созданные до этой даты не будут показываться
+            </p>
+          </div>
         </div>
       )}
 
@@ -639,6 +657,22 @@ function NavContent({
               {t('common.sync')}
             </Button>
           )}
+          
+          {/* Accounting Start Date */}
+          <div className="px-4 space-y-2 pt-2">
+            <label className="text-sm font-medium text-cyan-400 block">
+              Дата начала учёта финансов
+            </label>
+            <input
+              type="date"
+              value={settings.accountingStartDate || ''}
+              onChange={(e) => updateSettings({ accountingStartDate: e.target.value || null })}
+              className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
+            />
+            <p className="text-xs text-cyan-500/60">
+              Ежемесячные платежи созданные до этой даты не будут показываться
+            </p>
+          </div>
         </div>
       )}
 
