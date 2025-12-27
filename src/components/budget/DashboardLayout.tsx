@@ -280,6 +280,7 @@ export default function DashboardLayout() {
                 mobile
                 language={language}
                 changeLanguage={changeLanguage}
+                handleNavClick={handleNavClick}
               />
             </SheetContent>
           </Sheet>
@@ -315,6 +316,7 @@ export default function DashboardLayout() {
             onSignOut={handleSignOut}
             language={language}
             changeLanguage={changeLanguage}
+            handleNavClick={handleNavClick}
           />
         </aside>
 
@@ -449,14 +451,14 @@ function NavContent({
           const Icon = item.icon;
           const isActive = currentView === item.id;
           
-          // Используем переданный handleNavClick или создаем локальный
-          const navClick = handleNavClick || (() => {
+          // Всегда используем handleNavClick из пропсов
+          const navClick = handleNavClick ? () => handleNavClick(item) : () => {
             if (item.external) {
               window.location.href = '/family';
             } else {
               setCurrentView(item.id as any);
             }
-          });
+          };
 
           return (
             <button
