@@ -51,33 +51,6 @@ export default function DashboardLayout() {
     setIsMounted(true);
     if (typeof window !== 'undefined') {
       document.documentElement.classList.add('dark');
-      
-      // #region agent log
-      const mountLogData = {
-        location: 'DashboardLayout.tsx:49',
-        message: 'DashboardLayout mount',
-        data: {
-          origin: window.location.origin,
-          hostname: window.location.hostname,
-          protocol: window.location.protocol,
-          pathname: window.location.pathname,
-          language: language,
-          currentView: currentView,
-          currentMonth: currentMonth,
-          userAgent: navigator.userAgent.substring(0, 100),
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'domain-comparison',
-          hypothesisId: 'G'
-        },
-        timestamp: Date.now()
-      };
-      fetch('https://log-agent.example.com/log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mountLogData)
-      }).catch(() => {});
-      // #endregion agent log
     }
   }, []);
 
@@ -527,7 +500,10 @@ function NavContent({
             <input
               type="date"
               value={settings.accountingStartDate || ''}
-              onChange={(e) => updateSettings({ accountingStartDate: e.target.value || null })}
+              onChange={async (e) => {
+                const dateValue = e.target.value || null;
+                updateSettings({ accountingStartDate: dateValue });
+              }}
               className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
             />
             <p className="text-xs text-cyan-500/60">
@@ -667,7 +643,10 @@ function NavContent({
             <input
               type="date"
               value={settings.accountingStartDate || ''}
-              onChange={(e) => updateSettings({ accountingStartDate: e.target.value || null })}
+              onChange={async (e) => {
+                const dateValue = e.target.value || null;
+                updateSettings({ accountingStartDate: dateValue });
+              }}
               className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
             />
             <p className="text-xs text-cyan-500/60">

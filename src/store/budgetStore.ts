@@ -28,7 +28,7 @@ interface BudgetStore {
   // Actions - Expenses
   addExpense: (expense: Omit<Expense, 'id' | 'history' | 'createdAt'>) => void;
   updateExpense: (id: string, updates: Partial<Expense>) => void;
-  deleteExpense: (id: string) => void;
+  deleteExpense: (id: string) => Promise<void>;
   toggleExpensePaid: (id: string) => void;
   addActualExpense: (expenseId: string, actualExpense: { date: string; amount: number; items?: string }) => void;
 
@@ -395,7 +395,7 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = getCurrentUserIdSync();
           if (userId) {
-            supabase.from('income').delete().eq('id', id).eq('user_id', userId).catch(console.error);
+            supabase.from('income').delete().eq('id', id).eq('user_id', userId).then().catch(console.error);
           }
         }
       },
@@ -491,7 +491,7 @@ export const useBudgetStore = create<BudgetStore>()(
         }
       },
 
-      deleteExpense: (id) => {
+      deleteExpense: async (id) => {
         set((state) => ({
           expenses: state.expenses.filter((exp) => exp.id !== id),
         }));
@@ -499,7 +499,7 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = getCurrentUserIdSync();
           if (userId) {
-            supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);
+            await supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);
           }
         }
       },
