@@ -72,6 +72,7 @@ export default function DashboardLayout() {
         },
         timestamp: Date.now()
       };
+      fetch('https://log-agent.example.com/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mountLogData)
