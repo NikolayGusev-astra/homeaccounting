@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useScheduleStore } from '@/store/scheduleStore';
+import { useFamilyStore } from '@/store/familyStore';
 import { Schedule, ScheduleKind } from '@/types/schedule';
+import { VisibilityToggle } from '@/components/family/VisibilityToggle';
 
 interface ScheduleFormProps {
   onClose?: () => void;
@@ -9,6 +11,8 @@ interface ScheduleFormProps {
 
 export default function ScheduleForm({ onClose, onSuccess }: ScheduleFormProps) {
   const { addSchedule } = useScheduleStore();
+  
+  const { currentFamilyAccount } = useFamilyStore();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -19,7 +23,9 @@ export default function ScheduleForm({ onClose, onSuccess }: ScheduleFormProps) 
     startDate: new Date().toISOString().split('T')[0],
     recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=1', // По умолчанию 1 числа каждого месяца
     status: 'active' as 'active' | 'paused' | 'cancelled',
-    description: ''
+    description: '',
+    visibility: 'personal' as 'personal' | 'family',
+    familyAccountId: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,7 +57,11 @@ export default function ScheduleForm({ onClose, onSuccess }: ScheduleFormProps) 
         startDate: formData.startDate,
         recurrenceRule: formData.recurrenceRule,
         status: formData.status,
-        description: formData.description || undefined
+        description: formData.description || undefined,
+        visibility: formData.visibility,
+        familyAccountId: formData.visibility === 'family' && currentFamilyAccount?.id 
+          ? currentFamilyAccount.id 
+          : null
       });
 
       onSuccess?.();
@@ -184,6 +194,20 @@ export default function ScheduleForm({ onClose, onSuccess }: ScheduleFormProps) 
           rows={3}
           placeholder="Дополнительная информация о расписании"
         />
+      </div>
+
+      {/* Видимость */}
+      <div>
+        <VisibilityToggle
+          visibility={formData.visibility}
+          onChange={(visibility) => setFormData({ ...formData, visibility })}
+          disabled={!currentFamilyAccount && formData.visibility === 'family'}
+        />
+        {!currentFamilyAccount && formData.visibility === 'family' && (
+          <p className="mt-2 text-sm text-yellow-500">
+            Создайте или выберите семейный аккаунт для добавления семейных расписаний
+          </p>
+        )}
       </div>
 
       {errors.form && <p className="text-sm text-red-500">{errors.form}</p>}

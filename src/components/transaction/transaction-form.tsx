@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useScheduleStore } from '@/store/scheduleStore';
+import { useFamilyStore } from '@/store/familyStore';
 import { Transaction, TransactionType, TransactionCategory } from '@/types/transaction';
 import { ExpenseSubcategoryDetail, CreditKind, TransferKind } from '@/types/budget';
+import { VisibilityToggle } from '@/components/family/VisibilityToggle';
 
 interface TransactionFormProps {
   onClose?: () => void;
@@ -10,6 +12,8 @@ interface TransactionFormProps {
 
 export default function TransactionForm({ onClose, onSuccess }: TransactionFormProps) {
   const { addTransaction } = useScheduleStore();
+  
+  const { currentFamilyAccount } = useFamilyStore();
   
   const [formData, setFormData] = useState({
     type: 'expense' as TransactionType,
@@ -28,7 +32,8 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
     interestRate: '',
     creditLimit: '',
     gracePeriod: '',
-    isRecurring: false
+    isRecurring: false,
+    visibility: 'personal' as 'personal' | 'family'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -76,7 +81,11 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
         bankName: formData.bankName || undefined,
         interestRate: formData.interestRate ? parseFloat(formData.interestRate) : undefined,
         creditLimit: formData.creditLimit ? parseFloat(formData.creditLimit) : undefined,
-        gracePeriod: formData.gracePeriod || undefined
+        gracePeriod: formData.gracePeriod || undefined,
+        visibility: formData.visibility,
+        familyAccountId: formData.visibility === 'family' && currentFamilyAccount?.id 
+          ? currentFamilyAccount.id 
+          : null
       });
 
       onSuccess?.();
@@ -315,6 +324,20 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
           rows={3}
           placeholder="Дополнительная информация о транзакции"
         />
+      </div>
+
+      {/* Видимость */}
+      <div>
+        <VisibilityToggle
+          visibility={formData.visibility}
+          onChange={(visibility) => setFormData({ ...formData, visibility })}
+          disabled={!currentFamilyAccount && formData.visibility === 'family'}
+        />
+        {!currentFamilyAccount && formData.visibility === 'family' && (
+          <p className="mt-2 text-sm text-yellow-500">
+            Создайте или выберите семейный аккаунт для добавления семейных транзакций
+          </p>
+        )}
       </div>
 
       {errors.form && <p className="text-sm text-red-500">{errors.form}</p>}
