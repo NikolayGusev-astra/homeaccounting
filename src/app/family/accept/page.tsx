@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useFamilyStore } from '@/store/familyStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default function AcceptInvitationPage() {
+function AcceptInvitationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const code = searchParams.get('code')
@@ -102,5 +102,13 @@ export default function AcceptInvitationPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function AcceptInvitationPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Загрузка...</div>}>
+      <AcceptInvitationContent />
+    </Suspense>
   )
 }
