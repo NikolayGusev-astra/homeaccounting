@@ -685,7 +685,7 @@ export const useBudgetStore = create<BudgetStore>()(
         }
       },
 
-      syncFromSupabase: async () => {
+            syncFromSupabase: async () => {
         if (!isSupabaseEnabled() || !supabase) {
           console.warn('Supabase not configured, skipping sync');
           return;
@@ -735,7 +735,7 @@ export const useBudgetStore = create<BudgetStore>()(
             id: exp.id,
             name: exp.name,
             amount: Number(exp.amount),
-            category: exp.category,
+            category: exp.category as any,
             dayOfMonth: exp.day_of_month,
             frequency: exp.frequency as any,
             isPaid: exp.is_paid,
@@ -745,35 +745,27 @@ export const useBudgetStore = create<BudgetStore>()(
             notes: exp.notes,
             isTransfer: exp.is_transfer || undefined,
             transferType: exp.transfer_type || undefined,
+            history: [],
             createdAt: exp.created_at,
           }));
 
-          const localIncome = get().income;
-          const localExpenses = get().expenses;
+          set({ income, expenses });
 
-          const shouldSyncIncome = localIncome.length === 0 || (income.length > 0 && income[0]?.createdAt !== localIncome[0]?.createdAt);
-          const shouldSyncExpenses = localExpenses.length === 0 || (expenses.length > 0 && expenses[0]?.createdAt !== localExpenses[0]?.createdAt);
-
-          if (shouldSyncIncome || shouldSyncExpenses) {
-            set({
-              income: shouldSyncIncome ? income : localIncome,
-              expenses: shouldSyncExpenses ? expenses : localExpenses,
-            });
-          }
         } catch (error) {
           console.error('Error during sync from Supabase:', error);
         } finally {
           set({ isSyncing: false });
         }
       },
-    }),
-  {
-    name: 'budget-storage',
-    partialize: (state) => ({
-      income: state.income,
-      expenses: state.expenses,
-      settings: state.settings,
-      currentMonth: state.currentMonth,
-    })
-  }
-);
+    }), // Закрываем объект стора
+    {
+      name: 'budget-storage',
+      partialize: (state) => ({
+        income: state.income,
+        expenses: state.expenses,
+        settings: state.settings,
+        currentMonth: state.currentMonth,
+      }),
+    }
+  ) // Закрываем persist
+); // Закрываем create
