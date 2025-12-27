@@ -442,22 +442,13 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = await getCurrentUserId();
           if (userId) {
-            // ИСПРАВЛЕНО: Удаляем из income_legacy, проверяем ID
             const { error: deleteError } = await supabase
-              .from('income_legacy')
-              .delete()
-              .eq('id', id)
-              .eq('user_id', userId);
-
-            // ИСПРАВЛЕНО: Удаляем из expenses_legacy, проверяем ID
-            const { error: deleteError2 } = await supabase
               .from('expenses_legacy')
               .delete()
               .eq('id', id)
               .eq('user_id', userId);
 
-            if (deleteError) console.error('Error deleting income:', deleteError);
-            if (deleteError2) console.error('Error deleting expense:', deleteError2);
+            if (deleteError) console.error('Error deleting expense:', deleteError);
           }
         }
       },
@@ -538,7 +529,6 @@ export const useBudgetStore = create<BudgetStore>()(
               },
             }));
           } else {
-            // Создаём профиль если его нет
             await supabase.from('profiles').insert({
               id: userId,
               user_id: userId,
@@ -710,7 +700,6 @@ export const useBudgetStore = create<BudgetStore>()(
         set({ isSyncing: true });
 
         try {
-          // Загружаем income и expenses из Supabase
           const { data: incomeData, error: incomeError } = await supabase
             .from('income_legacy')
             .select('*')
@@ -759,8 +748,6 @@ export const useBudgetStore = create<BudgetStore>()(
             createdAt: exp.created_at,
           }));
 
-          // ВАЖНОЕ: Синхронизируем только если локально данных нет или они старые
-          // Это предотвращает перезапись локальных изменений удалёнными записями
           const localIncome = get().income;
           const localExpenses = get().expenses;
 
@@ -779,10 +766,7 @@ export const useBudgetStore = create<BudgetStore>()(
           set({ isSyncing: false });
         }
       },
-
-      isSyncing: boolean,
-    })
-  ),
+    }),
   {
     name: 'budget-storage',
     partialize: (state) => ({
