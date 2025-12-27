@@ -69,20 +69,14 @@ const calculateForecast = (
   expenses: Expense[],
   year: number,
   month: number,
-  startingBalance: number = 0,
-  accountingStartDate?: string | null
+  startingBalance: number = 0
 ): MonthlyForecast => {
-  // #region agent log
-  // #endregion
   const daysInMonth = new Date(year, month, 0).getDate();
   const dailyBalances: DailyBalance[] = [];
   const cashGaps: CashGap[] = [];
   let currentBalance = startingBalance;
   let totalIncome = 0;
   let totalExpenses = 0;
-
-  // Парсим дату начала учёта
-  const accountingStart = accountingStartDate ? new Date(accountingStartDate) : null;
 
   // Pre-calculate all payment occurrences for entire month
   const incomeOccurrences = new Map<number, Income[]>();
@@ -93,35 +87,22 @@ const calculateForecast = (
     const occurrences: number[] = [];
 
     if (inc.frequency === 'once') {
-      // Only if target month/year matches current
       if (inc.targetYear === year && inc.targetMonth === month && inc.dayOfMonth) {
         occurrences.push(inc.dayOfMonth);
       }
     } else if (inc.frequency === 'monthly') {
-      // Для ежемесячных: проверяем, не создан ли платеж ДО начала учёта
-      if (!accountingStart || 
-          new Date(year, month, inc.dayOfMonth) >= accountingStart) {
-        occurrences.push(inc.dayOfMonth);
-      }
+      occurrences.push(inc.dayOfMonth);
     } else if (inc.frequency === 'weekly') {
-      // Every 7 days starting from dayOfMonth
       for (let i = 0; i < 5; i++) {
         const occurrenceDay = inc.dayOfMonth + (i * 7);
         if (occurrenceDay > daysInMonth) break;
-        const occurrenceDate = new Date(year, month, occurrenceDay);
-        if (!accountingStart || occurrenceDate >= accountingStart) {
-          occurrences.push(occurrenceDay);
-        }
+        occurrences.push(occurrenceDay);
       }
     } else if (inc.frequency === 'biweekly') {
-      // Every 14 days starting from dayOfMonth
       for (let i = 0; i < 3; i++) {
         const occurrenceDay = inc.dayOfMonth + (i * 14);
         if (occurrenceDay > daysInMonth) break;
-        const occurrenceDate = new Date(year, month, occurrenceDay);
-        if (!accountingStart || occurrenceDate >= accountingStart) {
-          occurrences.push(occurrenceDay);
-        }
+        occurrences.push(occurrenceDay);
       }
     }
 
@@ -135,53 +116,30 @@ const calculateForecast = (
 
   // Calculate expense occurrences
   expenses.forEach(exp => {
-    // #region agent log
-    // #endregion
     const occurrences: number[] = [];
-    // По умолчанию считаем monthly, если frequency не установлен
     const frequency = exp.frequency || 'monthly';
 
     if (frequency === 'once') {
-      // Only if target month/year matches current
       if (exp.targetYear === year && exp.targetMonth === month && exp.dayOfMonth) {
         occurrences.push(exp.dayOfMonth);
-        // #region agent log
-        // #endregion
       }
     } else if (frequency === 'monthly') {
-      // Для ежемесячных: проверяем, не создан ли платеж ДО начала учёта
-      if (!accountingStart || 
-          new Date(year, month, exp.dayOfMonth || 1) >= accountingStart) {
-        if (exp.dayOfMonth) {
-          occurrences.push(exp.dayOfMonth);
-          // #region agent log
-          // #endregion
-        } else {
-          // #region agent log
-          // #endregion
-        }
+      if (exp.dayOfMonth) {
+        occurrences.push(exp.dayOfMonth);
       }
     } else if (frequency === 'weekly') {
-      // Every 7 days starting from dayOfMonth (default to day 1 if not set)
       const baseDay = exp.dayOfMonth || 1;
       for (let i = 0; i < 5; i++) {
         const occurrenceDay = baseDay + (i * 7);
         if (occurrenceDay > daysInMonth) break;
-        const occurrenceDate = new Date(year, month, occurrenceDay);
-        if (!accountingStart || occurrenceDate >= accountingStart) {
-          occurrences.push(occurrenceDay);
-        }
+        occurrences.push(occurrenceDay);
       }
     } else if (frequency === 'biweekly') {
-      // Every 14 days starting from dayOfMonth (default to day 1 if not set)
       const baseDay = exp.dayOfMonth || 1;
       for (let i = 0; i < 3; i++) {
         const occurrenceDay = baseDay + (i * 14);
         if (occurrenceDay > daysInMonth) break;
-        const occurrenceDate = new Date(year, month, occurrenceDay);
-        if (!accountingStart || occurrenceDate >= accountingStart) {
-          occurrences.push(occurrenceDay);
-        }
+        occurrences.push(occurrenceDay);
       }
     }
 
@@ -196,26 +154,20 @@ const calculateForecast = (
   for (let day = 1; day <= daysInMonth; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
-    // Get income transactions for this day
     const dayIncomeTransactions = incomeOccurrences.get(day) || [];
     const incomeAmount = dayIncomeTransactions.reduce((sum, inc) => inc.received ? sum + inc.amount : sum, 0);
-    const incomeAmountAll = dayIncomeTransactions.reduce((sum, inc) => sum + inc.amount, 0); // For calendar display
+    const incomeAmountAll = dayIncomeTransactions.reduce((sum, inc) => sum + inc.amount, 0);
 
-    // Get expense transactions for this day
     const dayExpenseTransactions = expenseOccurrences.get(day) || [];
-    // Все расходы учитываются в балансе, независимо от статуса оплаты
     const expenseAmount = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0);
-    const expenseAmountAll = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0); // For calendar display
+    const expenseAmountAll = dayExpenseTransactions.reduce((sum, exp) => sum + exp.amount, 0);
 
-    // Update balance
     currentBalance += incomeAmount - expenseAmount;
     const isCashGap = currentBalance < 0;
 
-    // Track totals
     totalIncome += incomeAmount;
     totalExpenses += expenseAmount;
 
-    // Store daily balance
     dailyBalances.push({
       date: dateStr,
       day,
@@ -229,7 +181,6 @@ const calculateForecast = (
       expenseTransactions: dayExpenseTransactions,
     });
 
-    // Track cash gaps
     if (isCashGap) {
       cashGaps.push({
         date: dateStr,
@@ -261,10 +212,8 @@ const calculateCategoryStats = (
 ): CategoryStats[] => {
   const monthlyExpenses = expenses.filter(exp => {
     if (exp.frequency === 'once') {
-      // Разовые расходы - только если целевой месяц совпадает
       return exp.targetYear === year && exp.targetMonth === month;
     } else {
-      // Периодические расходы - всегда учитываем в текущем месяце
       return true;
     }
   });
@@ -301,15 +250,10 @@ const calculateTotalExpenses = (
   year: number,
   month: number
 ): number => {
-  // Считаем все расходы, которые должны быть в этом месяце
-  // Для monthly/weekly/biweekly - всегда учитываем
-  // Для once - только если targetYear и targetMonth совпадают
   const monthlyExpenses = expenses.filter(exp => {
     if (exp.frequency === 'once') {
-      // Разовые расходы - только если целевой месяц совпадает
       return exp.targetYear === year && exp.targetMonth === month;
     } else {
-      // Периодические расходы - всегда учитываем в текущем месяце
       return true;
     }
   });
@@ -332,7 +276,6 @@ export const useBudgetStore = create<BudgetStore>()(
       currentMonth: getCurrentMonth(),
       isSyncing: false,
 
-      // Income actions
       addIncome: (incomeData) => {
         const newIncome: Income = {
           ...incomeData,
@@ -340,7 +283,6 @@ export const useBudgetStore = create<BudgetStore>()(
           createdAt: new Date().toISOString(),
         };
         
-        // Если это отправленный перевод, автоматически создаем его в расходах
         let newExpense: Expense | null = null;
         if (incomeData.isTransfer && incomeData.transferType === 'sent') {
           newExpense = {
@@ -363,13 +305,11 @@ export const useBudgetStore = create<BudgetStore>()(
           };
         }
         
-        // Обновляем состояние одним вызовом
         set((state) => ({
           income: [...state.income, newIncome],
           expenses: newExpense ? [...state.expenses, newExpense] : state.expenses,
         }));
         
-        // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -381,7 +321,7 @@ export const useBudgetStore = create<BudgetStore>()(
             inc.id === id ? { ...inc, ...updates } : inc
           ),
         }));
-        // Автоматическая синхронизация с Supabase
+        
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -391,7 +331,7 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           income: state.income.filter((inc) => inc.id !== id),
         }));
-        // Удаляем с Supabase, но НЕ вызываем syncToSupabase() чтобы не перезаписать данные
+        
         if (isSupabaseEnabled() && supabase) {
           const userId = getCurrentUserIdSync();
           if (userId) {
@@ -412,13 +352,12 @@ export const useBudgetStore = create<BudgetStore>()(
               : inc
           ),
         }));
-        // Автоматическая синхронизация с Supabase
+        
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
       },
 
-      // Expense actions
       addExpense: (expenseData) => {
         const now = new Date();
         const newExpense: Expense = {
@@ -434,7 +373,6 @@ export const useBudgetStore = create<BudgetStore>()(
           createdAt: now.toISOString(),
         };
         
-        // Если это полученный перевод, автоматически создаем его в доходах
         let newIncome: Income | null = null;
         if (expenseData.isTransfer && expenseData.transferType === 'received') {
           newIncome = {
@@ -454,13 +392,11 @@ export const useBudgetStore = create<BudgetStore>()(
           };
         }
         
-        // Обновляем состояние одним вызовом
         set((state) => ({
           expenses: [...state.expenses, newExpense],
           income: newIncome ? [...state.income, newIncome] : state.income,
         }));
         
-        // Автоматическая синхронизация с Supabase
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -472,7 +408,6 @@ export const useBudgetStore = create<BudgetStore>()(
             exp.id === id
               ? {
                   ...exp,
-                  ...updates,
                   history: [
                     ...exp.history,
                     {
@@ -485,7 +420,7 @@ export const useBudgetStore = create<BudgetStore>()(
               : exp
           ),
         }));
-        // Автоматическая синхронизация с Supabase
+        
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -495,9 +430,9 @@ export const useBudgetStore = create<BudgetStore>()(
         set((state) => ({
           expenses: state.expenses.filter((exp) => exp.id !== id),
         }));
-        // Удаляем с Supabase, но НЕ вызываем syncToSupabase() чтобы не перезаписать данные
+        
         if (isSupabaseEnabled() && supabase) {
-          const userId = getCurrentUserIdSync();
+          const userId = await getCurrentUserId();
           if (userId) {
             await supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);
           }
@@ -523,7 +458,7 @@ export const useBudgetStore = create<BudgetStore>()(
               : exp
           ),
         }));
-        // Автоматическая синхронизация с Supabase
+        
         if (isSupabaseEnabled()) {
           get().syncToSupabase().catch(console.error);
         }
@@ -542,18 +477,16 @@ export const useBudgetStore = create<BudgetStore>()(
         }));
       },
 
-      // Settings actions
       updateSettings: async (settings) => {
         set((state) => ({
           settings: { ...state.settings, ...settings },
         }));
-        // Автоматическая синхронизация настроек
+        
         if (isSupabaseEnabled()) {
           await get().syncSettings().catch(console.error);
         }
       },
 
-      // Загрузка настроек из Supabase
       loadSettings: async () => {
         if (!isSupabaseEnabled() || !supabase) return;
         
@@ -575,11 +508,9 @@ export const useBudgetStore = create<BudgetStore>()(
                 theme: profile.theme || 'dark-neon',
                 notifications: profile.notifications ?? true,
                 defaultMonth: profile.default_month || 'current',
-                accountingStartDate: profile.accounting_start_date,
               }
             }));
           } else {
-            // Создаём профиль если его нет
             await supabase.from('profiles').insert({
               id: userId,
               user_id: userId,
@@ -588,7 +519,6 @@ export const useBudgetStore = create<BudgetStore>()(
               theme: get().settings.theme,
               notifications: get().settings.notifications,
               default_month: get().settings.defaultMonth,
-              accounting_start_date: get().settings.accountingStartDate,
             });
           }
         } catch (error) {
@@ -596,7 +526,6 @@ export const useBudgetStore = create<BudgetStore>()(
         }
       },
 
-      // Синхронизация настроек с Supabase
       syncSettings: async () => {
         if (!isSupabaseEnabled() || !supabase) return;
         
@@ -609,7 +538,6 @@ export const useBudgetStore = create<BudgetStore>()(
             .from('profiles')
             .upsert({
               user_id: userId,
-              accounting_start_date: settings.accountingStartDate,
               currency: settings.currency,
               locale: settings.locale,
               theme: settings.theme,
@@ -652,10 +580,9 @@ export const useBudgetStore = create<BudgetStore>()(
         });
       },
 
-      // Computed implementations
       getMonthlyForecast: (year, month, startingBalance = 0) => {
-        const { income, expenses, settings } = get();
-        return calculateForecast(income, expenses, year, month, startingBalance, settings.accountingStartDate);
+        const { income, expenses } = get();
+        return calculateForecast(income, expenses, year, month, startingBalance);
       },
 
       getCategoryStats: (year, month) => {
@@ -668,7 +595,6 @@ export const useBudgetStore = create<BudgetStore>()(
         return calculateTotalExpenses(expenses, year, month);
       },
 
-      // Supabase Sync methods
       syncToSupabase: async () => {
         if (!isSupabaseEnabled() || !supabase) {
           console.warn('Supabase not configured, skipping sync');
@@ -686,7 +612,6 @@ export const useBudgetStore = create<BudgetStore>()(
         try {
           const { income, expenses } = get();
 
-          // Синхронизация доходов
           if (income.length > 0) {
             const incomeData = income.map(inc => ({
               id: inc.id,
@@ -704,7 +629,6 @@ export const useBudgetStore = create<BudgetStore>()(
               transfer_type: inc.transferType ?? null,
             }));
 
-            // Используем upsert для обновления или создания
             const { error: incomeError } = await supabase
               .from('income')
               .upsert(incomeData);
@@ -714,7 +638,6 @@ export const useBudgetStore = create<BudgetStore>()(
             }
           }
 
-          // Синхронизация расходов
           if (expenses.length > 0) {
             const expensesData = expenses.map(exp => ({
               id: exp.id,
@@ -763,7 +686,6 @@ export const useBudgetStore = create<BudgetStore>()(
         set({ isSyncing: true });
 
         try {
-          // Загрузить доходы
           const { data: incomeData, error: incomeError } = await supabase
             .from('income')
             .select('*')
@@ -774,7 +696,6 @@ export const useBudgetStore = create<BudgetStore>()(
             console.error('Error loading income:', incomeError);
           }
 
-          // Загрузить расходы
           const { data: expensesData, error: expensesError } = await supabase
             .from('expenses')
             .select('*')
@@ -785,7 +706,6 @@ export const useBudgetStore = create<BudgetStore>()(
             console.error('Error loading expenses:', expensesError);
           }
 
-          // Преобразовать в формат приложения
           const income: Income[] = (incomeData || []).map(inc => ({
             id: inc.id,
             name: inc.name,
