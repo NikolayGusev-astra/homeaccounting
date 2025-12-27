@@ -1,18 +1,65 @@
-# Миграция: Добавление поля accounting_start_date
+# Добавление поля accounting_start_date и синхронизация настроек
 
 ## Описание
-Добавляет поле `accounting_start_date` в таблицу `profiles` для указания даты начала учёта финансов. Это позволит не показывать ежемесячные платежи, которые были созданы до начала учёта.
+Добавляет таблицу `profiles` в Supabase для хранения настроек пользователей, включая `accounting_start_date`. Это позволит синхронизировать настройки между устройствами и не показывать ежемесячные платежи, которые были созданы до начала учёта.
 
 ## SQL для выполнения в Supabase SQL Editor
 
 ```sql
--- Добавляем колонку accounting_start_date в таблицу profiles
-ALTER TABLE public.profiles 
-ADD COLUMN IF NOT EXISTS accounting_start_date DATE;
+-- Создаём таблицу profiles для хранения настроек пользователя
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id TEXT PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  accounting_start_date DATE,
+  currency TEXT DEFAULT 'RUB',
+  locale TEXT DEFAULT 'ru-RU',
+  theme TEXT DEFAULT 'dark-neon',
+  notifications BOOLEAN DEFAULT true,
+  default_month TEXT DEFAULT 'current',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
 
--- Устанавливаем значение по умолчанию для существующих пользователей
--- Если колонка была добавлена без значения, установим NULL
--- Пользователь сможет установить дату через UI
+-- Создаём индексы
+CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
+
+-- Включаем RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Политика RLS - пользователь может читать и редактировать свои настройки
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile"
+  ON public.profiles
+  FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+  ON public.profiles
+  FOR UPDATE
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles
+  FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Функция для автоматического обновления updated_at
+CREATE OR REPLACE FUNCTION update_profile_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Триггер для автоматического обновления updated_at
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+CREATE TRIGGER update_profiles_updated_at 
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW 
+  EXECUTE FUNCTION update_profile_updated_at();
 
 -- Добавляем комментарий к колонке
 COMMENT ON COLUMN public.profiles.accounting_start_date IS 'Дата начала учёта финансов. Ежемесячные платежи созданные до этой даты не будут показываться в прогнозе';
@@ -20,7 +67,7 @@ COMMENT ON COLUMN public.profiles.accounting_start_date IS 'Дата начал�
 
 ## Как выполнить миграцию
 
-### Вариант 1: Через Supabase Dashboard (рекомендуется)
+### Через Supabase Dashboard (рекомендуется)
 
 1. Зайдите в [Supabase Dashboard](https://supabase.com/dashboard)
 2. Выберите ваш проект
@@ -29,15 +76,7 @@ COMMENT ON COLUMN public.profiles.accounting_start_date IS 'Дата начал�
 5. Вставьте SQL код выше
 6. Нажмите **Run** (или нажмите Ctrl+Enter)
 
-### Вариант 2: Через CLI (если настроен)
-
-```bash
-npx supabase db push
-```
-
-## После миграции
-
-### Что нужно изменить в коде
+## Что нужно изменить в коде
 
 #### 1. Обновить тип `AppSettings` в `src/types/budget.ts`
 
@@ -181,23 +220,114 @@ getMonthlyForecast: (year, month, startingBalance = 0) => {
 },
 ```
 
-#### 4. Добавить поле в `syncToSupabase`
+#### 4. Добавить синхронизацию настроек в `budgetStore.ts`
 
-Сохранять и загружать `accounting_start_date` из таблицы `profiles`:
+Добавить функции для загрузки и сохранения настроек:
 
 ```typescript
-// В syncFromSupabase добавляем загрузку:
-const { data: profileData } = await supabase
-  .from('profiles')
-  .select('accounting_start_date')
-  .eq('id', userId)
-  .single();
+// Добавить в BudgetStore interface:
+syncSettings: () => Promise<void>;
+loadSettings: () => Promise<void>;
 
-// В updateSettings добавляем сохранение:
-const { error: updateError } = await supabase
-  .from('profiles')
-  .update({ accounting_start_date: settings.accountingStartDate })
-  .eq('id', userId);
+// Реализация в store:
+
+// Загрузка настроек из Supabase
+loadSettings: async () => {
+  if (!isSupabaseEnabled() || !supabase) return;
+  
+  const userId = await getCurrentUserId();
+  if (!userId) return;
+
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (profile) {
+      set((state) => ({
+        settings: {
+          currency: profile.currency || 'RUB',
+          locale: profile.locale || 'ru-RU',
+          theme: profile.theme || 'dark-neon',
+          notifications: profile.notifications ?? true,
+          defaultMonth: profile.default_month || 'current',
+          accountingStartDate: profile.accounting_start_date,
+        }
+      }));
+    } else {
+      // Создаём профиль если его нет
+      await supabase.from('profiles').insert({
+        id: userId,
+        user_id: userId,
+        currency: get().settings.currency,
+        locale: get().settings.locale,
+        theme: get().settings.theme,
+        notifications: get().settings.notifications,
+        default_month: get().settings.defaultMonth,
+        accounting_start_date: get().settings.accountingStartDate,
+      });
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+},
+
+// Синхронизация настроек с Supabase
+syncSettings: async () => {
+  if (!isSupabaseEnabled() || !supabase) return;
+  
+  const userId = await getCurrentUserId();
+  if (!userId) return;
+
+  try {
+    const { settings } = get();
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({
+        user_id: userId,
+        accounting_start_date: settings.accountingStartDate,
+        currency: settings.currency,
+        locale: settings.locale,
+        theme: settings.theme,
+        notifications: settings.notifications,
+        default_month: settings.defaultMonth,
+      }, {
+        onConflict: 'user_id'
+      });
+
+    if (error) {
+      console.error('Error syncing settings:', error);
+    }
+  } catch (error) {
+    console.error('Error syncing settings:', error);
+  }
+},
+```
+
+#### 5. Обновить `updateSettings` для автоматической синхронизации
+
+```typescript
+updateSettings: (settings) => {
+  set((state) => ({
+    settings: { ...state.settings, ...settings },
+  }));
+  // Автоматическая синхронизация настроек
+  if (isSupabaseEnabled()) {
+    get().syncSettings().catch(console.error);
+  }
+},
+```
+
+#### 6. Загрузить настройки при инициализации
+
+```typescript
+// В компоненте или при инициализации приложения:
+useEffect(() => {
+  const store = useBudgetStore.getState();
+  store.loadSettings().catch(console.error);
+}, []);
 ```
 
 ## UI для настройки даты начала учёта
@@ -226,13 +356,18 @@ const { error: updateError } = await supabase
 
 После миграции и обновления кода:
 
-1. Установите дату начала учёта в настройках (например, 2024-12-01)
-2. Создайте ежемесячный платеж с датой 1-го числа
-3. Посмотрите прогноз за ноябрь 2024 года - платеж не должен показываться
-4. Посмотрите прогноз за декабрь 2024 года - платеж должен показываться
+1. Выполните SQL миграцию в Supabase
+2. Обновите код согласно инструкции выше
+3. Установите дату начала учёта в настройках (например, 2024-12-01)
+4. Создайте ежемесячный платеж с датой 1-го числа
+5. Посмотрите прогноз за ноябрь 2024 года - платеж не должен показываться
+6. Посмотрите прогноз за декабрь 2024 года - платеж должен показываться
+7. Войдите с другого устройства - настройки должны быть синхронизированы
 
 ## Примечания
 
 - Поле `accounting_start_date` может быть `NULL` - в этом случае показываются все платежи
-- Миграция безопасная - использует `IF NOT EXISTS`, поэтому можно запустить несколько раз
+- Настройки синхронизируются автоматически при каждом изменении
+- При первом входе создаётся профиль пользователя в таблице profiles
+- Используется Supabase RLS для защиты настроек разных пользователей
 - Дата хранится в формате ISO (YYYY-MM-DD)
