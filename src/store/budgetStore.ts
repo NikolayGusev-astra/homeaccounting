@@ -335,7 +335,7 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = getCurrentUserIdSync();
           if (userId) {
-            supabase.from('income').delete().eq('id', id).eq('user_id', userId).then().catch(console.error);
+            supabase.from('income_legacy').delete().eq('id', id).eq('user_id', userId).then().catch(console.error);
           }
         }
       },
@@ -434,7 +434,7 @@ export const useBudgetStore = create<BudgetStore>()(
         if (isSupabaseEnabled() && supabase) {
           const userId = await getCurrentUserId();
           if (userId) {
-            await supabase.from('expenses').delete().eq('id', id).eq('user_id', userId).catch(console.error);
+            await supabase.from('expenses_legacy').delete().eq('id', id).eq('user_id', userId).catch(console.error);
           }
         }
       },
@@ -630,7 +630,7 @@ export const useBudgetStore = create<BudgetStore>()(
             }));
 
             const { error: incomeError } = await supabase
-              .from('income')
+              .from('income_legacy')
               .upsert(incomeData);
 
             if (incomeError) {
@@ -657,7 +657,7 @@ export const useBudgetStore = create<BudgetStore>()(
             }));
 
             const { error: expensesError } = await supabase
-              .from('expenses')
+              .from('expenses_legacy')
               .upsert(expensesData);
 
             if (expensesError) {
@@ -687,7 +687,7 @@ export const useBudgetStore = create<BudgetStore>()(
 
         try {
           const { data: incomeData, error: incomeError } = await supabase
-            .from('income')
+            .from('income_legacy')
             .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: true });
@@ -697,7 +697,7 @@ export const useBudgetStore = create<BudgetStore>()(
           }
 
           const { data: expensesData, error: expensesError } = await supabase
-            .from('expenses')
+            .from('expenses_legacy')
             .select('*')
             .eq('user_id', userId)
             .order('created_at', { ascending: true });
