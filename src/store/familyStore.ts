@@ -197,6 +197,11 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       
       if (error) throw error;
       
+      // Временное решение: выводим ссылку в консоль для тестирования
+      const inviteLink = `${window.location.origin}/family/accept?code=${data.id}`;
+      console.log('📧 Приглашение создано! Ссылка:', inviteLink);
+      alert(`Приглашение отправлено!\n\nСсылка для тестирования:\n${inviteLink}`);
+      
       set(state => ({
         invitations: [...state.invitations, data],
         isLoading: false
@@ -524,26 +529,26 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       const userId = await get().getCurrentUserId();
       if (!userId) return false;
       
+      // Проверяем, является ли пользователь создателем аккаунта
+      const { data: account, error: accountError } = await supabase
+        .from('family_accounts')
+        .select('created_by')
+        .eq('id', familyAccountId)
+        .maybeSingle();
+      
+      if (!accountError && account?.created_by === userId) {
+        return true;
+      }
+      
       // Проверяем, является ли пользователь владельцем через family_members
       const { data: member, error: memberError } = await supabase
         .from('family_members')
         .select('role')
         .eq('family_account_id', familyAccountId)
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
-      if (!memberError && member?.role === 'owner') {
-        return true;
-      }
-      
-      // Также проверяем, является ли пользователь создателем аккаунта
-      const { data: account, error: accountError } = await supabase
-        .from('family_accounts')
-        .select('created_by')
-        .eq('id', familyAccountId)
-        .single();
-      
-      return !accountError && account?.created_by === userId;
+      return !memberError && member?.role === 'owner';
     } catch {
       return false;
     }

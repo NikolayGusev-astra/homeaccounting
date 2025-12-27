@@ -22,6 +22,7 @@ import {
   LogIn,
   LogOut,
   Languages,
+  Users,
 } from 'lucide-react';
 import DashboardView from './views/DashboardView';
 import IncomeView from './views/IncomeView';
@@ -70,8 +71,19 @@ export default function DashboardLayout() {
       { id: 'income' as ViewMode, label: t('nav.income'), icon: TrendingUp },
       { id: 'expenses' as ViewMode, label: t('nav.expenses'), icon: CreditCard },
       { id: 'analytics' as ViewMode, label: t('nav.analytics'), icon: BarChart3 },
+      { id: 'family' as any, label: 'Семейный бюджет', icon: Users, external: true },
     ];
   }, [language]);
+
+  // Handle navigation clicks
+  const handleNavClick = (item: any) => {
+    if (item.external) {
+      // External navigation - go to family page
+      window.location.href = '/family';
+    } else {
+      setCurrentView(item.id);
+    }
+  };
 
   const handleExport = () => {
     const { exportData } = useBudgetStore.getState();
@@ -385,18 +397,19 @@ export default function DashboardLayout() {
 interface NavContentProps {
   currentView: ViewMode;
   setCurrentView: (view: ViewMode) => void;
-  navigation: Array<{ id: ViewMode; label: string; icon: any }>;
+  navigation: Array<{ id: ViewMode | string; label: string; icon: any; external?: boolean }>;
   handleExport: () => void;
   handleImport: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleManualSync?: () => void;
   settings: any;
-  updateSettings: (settings: any) => void;
+  updateSettings?: (settings: any) => void;
   user?: any;
   onSignIn?: () => void;
   onSignOut?: () => void;
   mobile?: boolean;
   language?: 'ru' | 'en';
   changeLanguage?: (lang: 'ru' | 'en') => void;
+  handleNavClick?: (item: any) => void;
 }
 
 function NavContent({
@@ -413,7 +426,8 @@ function NavContent({
   onSignOut,
   mobile = false,
   language: languageProp,
-  changeLanguage: changeLanguageProp
+  changeLanguage: changeLanguageProp,
+  handleNavClick
 }: NavContentProps) {
   // Use useTranslation hook if language is not provided as prop
   const translationHook = useTranslation();
@@ -426,15 +440,20 @@ function NavContent({
         {navigation.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
-
-          const handleNavClick = () => {
-            setCurrentView(item.id);
-          };
+          
+          // Используем переданный handleNavClick или создаем локальный
+          const navClick = handleNavClick || (() => {
+            if (item.external) {
+              window.location.href = '/family';
+            } else {
+              setCurrentView(item.id as any);
+            }
+          });
 
           return (
             <button
               key={item.id}
-              onClick={handleNavClick}
+              onClick={navClick}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300",
                 isActive
@@ -493,28 +512,30 @@ function NavContent({
           )}
           
           {/* Accounting Start Date */}
-          <div className="px-4 space-y-2 pt-2">
-            <label className="text-sm font-medium text-cyan-400 block">
-              Дата начала учёта финансов
-            </label>
-            <input
-              type="date"
-              value={settings.accountingStartDate || ''}
-              onChange={async (e) => {
-                const dateValue = e.target.value || null;
-                await updateSettings({ accountingStartDate: dateValue });
-              }}
-              className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
-            />
-            <p className="text-xs text-cyan-500/60">
-              Ежемесячные платежи созданные до этой даты не будут показываться
-            </p>
-          </div>
+          {updateSettings && (
+            <div className="px-4 space-y-2 pt-2">
+              <label className="text-sm font-medium text-cyan-400 block">
+                Дата начала учёта финансов
+              </label>
+              <input
+                type="date"
+                value={settings.accountingStartDate || ''}
+                onChange={async (e) => {
+                  const dateValue = e.target.value || null;
+                  await updateSettings({ accountingStartDate: dateValue });
+                }}
+                className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
+              />
+              <p className="text-xs text-cyan-500/60">
+                Ежемесячные платежи созданные до этой даты не будут показываться
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Language Switcher - Desktop */}
-      {!mobile && (
+      {!mobile && changeLanguage && (
         <div className="space-y-2 pt-4 border-t border-cyan-500/20">
           <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider">
             {t('common.language')}
@@ -572,7 +593,7 @@ function NavContent({
       )}
 
       {/* Mobile Language Switcher */}
-      {mobile && (
+      {mobile && changeLanguage && (
         <div className="pt-4 border-t border-cyan-500/20">
           <p className="text-xs text-cyan-500/40 px-4 uppercase tracking-wider mb-2">
             {t('common.language')}
@@ -636,23 +657,25 @@ function NavContent({
           )}
           
           {/* Accounting Start Date */}
-          <div className="px-4 space-y-2 pt-2">
-            <label className="text-sm font-medium text-cyan-400 block">
-              Дата начала учёта финансов
-            </label>
-            <input
-              type="date"
-              value={settings.accountingStartDate || ''}
-              onChange={async (e) => {
-                const dateValue = e.target.value || null;
-                updateSettings({ accountingStartDate: dateValue });
-              }}
-              className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
-            />
-            <p className="text-xs text-cyan-500/60">
-              Ежемесячные платежи созданные до этой даты не будут показываться
-            </p>
-          </div>
+          {updateSettings && (
+            <div className="px-4 space-y-2 pt-2">
+              <label className="text-sm font-medium text-cyan-400 block">
+                Дата начала учёта финансов
+              </label>
+              <input
+                type="date"
+                value={settings.accountingStartDate || ''}
+                onChange={async (e) => {
+                  const dateValue = e.target.value || null;
+                  updateSettings({ accountingStartDate: dateValue });
+                }}
+                className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
+              />
+              <p className="text-xs text-cyan-500/60">
+                Ежемесячные платежи созданные до этой даты не будут показываться
+              </p>
+            </div>
+          )}
         </div>
       )}
 
