@@ -11,9 +11,22 @@ export interface Transaction {
   currency: 'RUB' | 'USD' | 'EUR';
   direction: 'income' | 'expense';
   description?: string;
-  is_generated: boolean; // true = from Schedule, false = manual
-  created_at: string;     // ISO timestamp
-  updated_at: string;     // ISO timestamp
+  
+  // New fields for enhanced functionality
+  category?: string;         // Main category (optional)
+  subcategory?: string;       // Subcategory for detailed tracking
+  is_transfer?: boolean;       // true if this is a transfer
+  transfer_type?: string;      // 'to_self' | 'to_family' | 'to_friend'
+  is_credit?: boolean;         // true if this is a credit payment
+  credit_kind?: string;        // 'mortgage' | 'consumer_credit' | 'credit_card' | 'auto_loan'
+  bank_name?: string;          // Bank name for credits
+  interest_rate?: number;      // Interest rate for credits
+  credit_limit?: number;       // Credit limit for credit cards
+  grace_period?: string;       // Grace period for credit cards (e.g., '30 days')
+  
+  is_generated: boolean;     // true = from Schedule, false = manual
+  created_at: string;        // ISO timestamp
+  updated_at: string;        // ISO timestamp
 }
 
 export interface TransactionFilter {
@@ -21,6 +34,9 @@ export interface TransactionFilter {
   endDate?: string;        // ISO date
   scheduleId?: string | null;
   direction?: 'income' | 'expense' | 'all';
+  category?: string;        // Filter by category
+  isTransfer?: boolean;     // Filter transfers
+  isCredit?: boolean;       // Filter credits
 }
 
 export type CreateTransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at'>;
