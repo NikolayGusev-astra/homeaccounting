@@ -115,12 +115,10 @@ FOR SELECT USING (
 DROP POLICY IF EXISTS "family_members_insert_policy" ON public.family_members;
 CREATE POLICY "family_members_insert_policy" ON public.family_members
 FOR INSERT WITH CHECK (
-  user_id = auth.uid()::text OR
   EXISTS (
-    SELECT 1 FROM public.family_members 
-    WHERE family_account_id = public.family_members.family_account_id
-    AND user_id = auth.uid()::text
-    AND role = 'owner'
+    SELECT 1 FROM public.family_accounts 
+    WHERE id = public.family_members.family_account_id
+    AND created_by = auth.uid()::text
   )
 );
 
@@ -185,10 +183,9 @@ FOR INSERT WITH CHECK (
   invited_by = auth.uid()::text
   AND
   EXISTS (
-    SELECT 1 FROM public.family_members 
-    WHERE family_account_id = public.family_invitations.family_account_id
-    AND user_id = auth.uid()::text
-    AND role = 'owner'
+    SELECT 1 FROM public.family_accounts 
+    WHERE id = public.family_invitations.family_account_id
+    AND created_by = auth.uid()::text
   )
 );
 

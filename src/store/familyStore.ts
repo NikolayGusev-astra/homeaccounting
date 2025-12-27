@@ -421,14 +421,45 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       const userId = await get().getCurrentUserId();
       if (!userId) return;
       
-      const { data, error } = await supabase
+      // Получаем аккаунты, созданные пользователем
+      const { data: createdAccounts, error: createdError } = await supabase
         .from('family_accounts')
         .select('*')
-        .or(`created_by.eq.${userId},id.in.(select family_account_id from family_members where user_id.eq.${userId})`);
+        .eq('created_by', userId);
       
-      if (error) throw error;
+      if (createdError) throw createdError;
       
-      set({ familyAccounts: data || [] });
+      // Получаем аккаунты, где пользователь является членом
+      const { data: memberAccounts, error: memberError } = await supabase
+        .from('family_members')
+        .select('family_account_id')
+        .eq('user_id', userId);
+      
+      if (memberError) throw memberError;
+      
+      // Получаем полные данные для аккаунтов, где пользователь член
+      const memberAccountIds = memberAccounts?.map(m => m.family_account_id) || [];
+      let allAccounts = createdAccounts || [];
+      
+      // Если есть аккаунты, где пользователь член, но не создатель
+      if (memberAccountIds.length > 0) {
+        const { data: additionalAccounts, error: additionalError } = await supabase
+          .from('family_accounts')
+          .select('*')
+          .in('id', memberAccountIds);
+        
+        if (!additionalError && additionalAccounts) {
+          // Объединяем, удаляя дубликаты
+          const existingIds = new Set(allAccounts.map(a => a.id));
+          additionalAccounts.forEach(acc => {
+            if (!existingIds.has(acc.id)) {
+              allAccounts.push(acc);
+            }
+          });
+        }
+      }
+      
+      set({ familyAccounts: allAccounts });
     } catch (error) {
       console.error('Failed to sync family accounts:', error);
     }
