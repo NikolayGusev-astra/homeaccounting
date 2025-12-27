@@ -421,7 +421,8 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       const userId = await get().getCurrentUserId();
       if (!userId) return;
       
-      // Получаем аккаунты, созданные пользователем
+      // Упрощенная логика: получаем только созданные аккаунты
+      // Члены семьи видят аккаунты через members, но не напрямую
       const { data: createdAccounts, error: createdError } = await supabase
         .from('family_accounts')
         .select('*')
@@ -429,7 +430,7 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       
       if (createdError) throw createdError;
       
-      // Получаем аккаунты, где пользователь является членом
+      // Получаем уникальные family_account_id из family_members
       const { data: memberAccounts, error: memberError } = await supabase
         .from('family_members')
         .select('family_account_id')
@@ -437,19 +438,18 @@ export const useFamilyStore = create<FamilyStore>((set, get) => ({
       
       if (memberError) throw memberError;
       
-      // Получаем полные данные для аккаунтов, где пользователь член
-      const memberAccountIds = memberAccounts?.map(m => m.family_account_id) || [];
+      // Фильтруем аккаунты, где пользователь член
+      const memberAccountIds = new Set(memberAccounts?.map(m => m.family_account_id) || []);
       let allAccounts = createdAccounts || [];
       
-      // Если есть аккаунты, где пользователь член, но не создатель
-      if (memberAccountIds.length > 0) {
+      // Добавляем уникальные аккаунты, где пользователь член
+      if (memberAccountIds.size > 0) {
         const { data: additionalAccounts, error: additionalError } = await supabase
           .from('family_accounts')
           .select('*')
-          .in('id', memberAccountIds);
+          .in('id', Array.from(memberAccountIds));
         
         if (!additionalError && additionalAccounts) {
-          // Объединяем, удаляя дубликаты
           const existingIds = new Set(allAccounts.map(a => a.id));
           additionalAccounts.forEach(acc => {
             if (!existingIds.has(acc.id)) {

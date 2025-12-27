@@ -48,3 +48,7 @@ prompt
 
 server.log
 /docs
+
+# supabase sql scripts (local development only)
+supabase/*.sql
+!supabase/migrations/
