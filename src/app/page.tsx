@@ -8,7 +8,7 @@ import DashboardLayout from '@/components/budget/DashboardLayout';
 export default function Home() {
   const { syncFromSupabase } = useBudgetStore();
   const hasSyncedRef = useRef(false);
-  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const syncIntervalRef = useRef<any>(null);
 
   useEffect(() => {
     // #region agent log
@@ -36,6 +36,7 @@ export default function Home() {
       },
       timestamp: Date.now()
     };
+    fetch('https://log-agent.example.com/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(logData)
@@ -43,6 +44,7 @@ export default function Home() {
     
     // Логируем ошибки из консоли
     const originalError = console.error;
+    console.error = (...args: any[]) => {
       const errorLogData = {
         location: 'page.tsx:console.error',
         message: 'Console error captured',
@@ -57,6 +59,7 @@ export default function Home() {
         },
         timestamp: Date.now()
       };
+      fetch('https://log-agent.example.com/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(errorLogData)
@@ -86,6 +89,7 @@ export default function Home() {
         },
         timestamp: Date.now()
       };
+      fetch('https://log-agent.example.com/log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(resourceLogData)
@@ -115,6 +119,7 @@ export default function Home() {
             },
             timestamp: Date.now()
           };
+          fetch('https://log-agent.example.com/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(syncLogData)
@@ -139,6 +144,7 @@ export default function Home() {
             },
             timestamp: Date.now()
           };
+          fetch('https://log-agent.example.com/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(errorLogData)
@@ -153,8 +159,49 @@ export default function Home() {
       if (isSupabaseEnabled() && document.visibilityState === 'visible') {
         syncFromSupabase()
           .then(() => {
+            // #region agent log
+            const visibilityLogData = {
+              location: 'page.tsx:visibilitychange',
+              message: 'Tab visible - sync started',
+              data: {
+                origin: window.location.origin,
+                hostname: window.location.hostname,
+                timestamp: Date.now(),
+                sessionId: 'debug-session',
+                runId: 'domain-comparison',
+                hypothesisId: 'D'
+              },
+              timestamp: Date.now()
+            };
+            fetch('https://log-agent.example.com/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(visibilityLogData)
+            }).catch(() => {});
+            // #endregion agent log
           })
           .catch((error) => {
+            // #region agent log
+            const visibilityErrorData = {
+              location: 'page.tsx:visibilitychange-error',
+              message: 'Tab visible - sync error',
+              data: {
+                origin: window.location.origin,
+                hostname: window.location.hostname,
+                error: error.message || String(error),
+                timestamp: Date.now(),
+                sessionId: 'debug-session',
+                runId: 'domain-comparison',
+                hypothesisId: 'E'
+              },
+              timestamp: Date.now()
+            };
+            fetch('https://log-agent.example.com/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(visibilityErrorData)
+            }).catch(() => {});
+            // #endregion agent log
           });
       }
     };
@@ -170,8 +217,49 @@ export default function Home() {
           if (document.visibilityState === 'visible') {
             syncFromSupabase()
               .then(() => {
+                // #region agent log
+                const periodicLogData = {
+                  location: 'page.tsx:periodic-sync',
+                  message: 'Periodic sync success',
+                  data: {
+                    origin: window.location.origin,
+                    hostname: window.location.hostname,
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'domain-comparison',
+                    hypothesisId: 'F'
+                  },
+                  timestamp: Date.now()
+                };
+                fetch('https://log-agent.example.com/log', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(periodicLogData)
+                }).catch(() => {});
+                // #endregion agent log
               })
               .catch((error) => {
+                // #region agent log
+                const periodicErrorData = {
+                  location: 'page.tsx:periodic-sync-error',
+                  message: 'Periodic sync error',
+                  data: {
+                    origin: window.location.origin,
+                    hostname: window.location.hostname,
+                    error: error.message || String(error),
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'domain-comparison',
+                    hypothesisId: 'G'
+                  },
+                  timestamp: Date.now()
+                };
+                fetch('https://log-agent.example.com/log', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(periodicErrorData)
+                }).catch(() => {});
+                // #endregion agent log
               });
           }
         }, 30000); // 30 секунд

@@ -38,6 +38,7 @@ function AuthCallbackContent() {
           },
           timestamp: Date.now()
         };
+        fetch('https://log-agent.example.com/log', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(callbackLogData)
@@ -66,6 +67,7 @@ function AuthCallbackContent() {
             },
             timestamp: Date.now()
           };
+          fetch('https://log-agent.example.com/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(errorLogData)
@@ -94,6 +96,7 @@ function AuthCallbackContent() {
             },
             timestamp: Date.now()
           };
+          fetch('https://log-agent.example.com/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(vkCodeLogData)
@@ -104,7 +107,7 @@ function AuthCallbackContent() {
           if (!window.VKIDSDK) {
             await new Promise((resolve, reject) => {
               const script = document.createElement('script')
-              script.src = 'https://unpkg.com/@vkid/sdk@<3.0.0/dist-sdk/umd/index.js'
+              script.src = 'https://unpkg.com/@vkid/sdk@3.0.0/dist-sdk/umd/index.js'
               script.async = true
               script.onload = () => {
                 if (window.VKIDSDK) {
@@ -172,6 +175,7 @@ function AuthCallbackContent() {
             },
             timestamp: Date.now()
           };
+          fetch('https://log-agent.example.com/log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(deviceIdLogData)
@@ -196,6 +200,7 @@ function AuthCallbackContent() {
               },
               timestamp: Date.now()
             };
+            fetch('https://log-agent.example.com/log', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(beforeExchangeLogData)
@@ -219,6 +224,7 @@ function AuthCallbackContent() {
               },
               timestamp: Date.now()
             };
+            fetch('https://log-agent.example.com/log', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(exchangeLogData)
@@ -248,6 +254,7 @@ function AuthCallbackContent() {
                 },
                 timestamp: Date.now()
               };
+              fetch('https://log-agent.example.com/log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vkAuthErrorLogData)
@@ -286,17 +293,12 @@ function AuthCallbackContent() {
               },
               timestamp: Date.now()
             };
+            fetch('https://log-agent.example.com/log', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(exchangeErrorLogData)
             }).catch(() => {});
             // #endregion agent log
-              message: error.message,
-              name: error.name,
-              code: error.code,
-              details: error.details || error.data,
-              stack: error.stack
-            })
             setStatus('error')
             setMessage(`Ошибка обмена кода VK: ${error.message || 'Неизвестная ошибка'}`)
             setTimeout(() => router.push('/'), 3000)
@@ -372,4 +374,3 @@ export default function AuthCallback() {
     </Suspense>
   )
 }
-
