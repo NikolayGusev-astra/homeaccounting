@@ -502,7 +502,7 @@ function NavContent({
               value={settings.accountingStartDate || ''}
               onChange={async (e) => {
                 const dateValue = e.target.value || null;
-                updateSettings({ accountingStartDate: dateValue });
+                await updateSettings({ accountingStartDate: dateValue });
               }}
               className="w-full px-3 py-2 bg-[#0a0a0f] border border-cyan-500/30 rounded-lg text-cyan-400 focus:border-cyan-400 focus:outline-none"
             />

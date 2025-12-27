@@ -31,6 +31,8 @@ export interface ScheduleRevision {
   updated_at: string;     // ISO timestamp
 }
 
-export type CreateScheduleInput = Omit<Schedule, 'id' | 'created_at' | 'updated_at'>;
+export type CreateScheduleInput = Omit<Schedule, 'id' | 'created_at' | 'updated_at'> & {
+  initialAmount: number; // Amount for first revision
+};
 export type CreateRevisionInput = Omit<ScheduleRevision, 'id' | 'created_at' | 'updated_at'>;
 export type UpdateScheduleInput = Partial<Omit<Schedule, 'id' | 'user_id' | 'created_at'>>;

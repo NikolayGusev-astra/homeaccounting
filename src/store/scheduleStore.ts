@@ -86,7 +86,7 @@ export const useScheduleStore = create<ScheduleStore>()(
               user_id: userId,
               valid_from: scheduleData.start_date,
               valid_to: null,
-              amount: scheduleData.amount || 0,
+              amount: scheduleData.initialAmount || 0,
               reason: null,
             });
 
@@ -177,13 +177,14 @@ export const useScheduleStore = create<ScheduleStore>()(
         if (!userId || !isSupabaseEnabled() || !supabase) return;
 
         try {
-          // Step 1: Close current revision
+          // Step 1: Close current revision (only if applyToFutureOnly is true)
           if (applyToFutureOnly) {
             const { error: closeError } = await supabase
               .from('schedule_revisions')
               .update({ valid_to: validFrom })
               .eq('schedule_id', scheduleId)
-              .eq('valid_to', null);
+              .eq('valid_to', null)
+              .lt('valid_from', validFrom); // Only close revisions that started before validFrom
 
             if (closeError) {
               console.error('Error closing current revision:', closeError);
