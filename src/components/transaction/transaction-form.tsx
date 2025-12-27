@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useScheduleStore } from '@/store/scheduleStore';
-import { Transaction, TransactionType } from '@/types/transaction';
+import { Transaction, TransactionType, TransactionCategory } from '@/types/transaction';
 import { ExpenseSubcategoryDetail, CreditKind, TransferKind } from '@/types/budget';
 
 interface TransactionFormProps {
@@ -17,7 +17,7 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
     currency: 'RUB',
     date: new Date().toISOString().split('T')[0],
     description: '',
-    category: '',
+    category: undefined,
     subcategory: '' as ExpenseSubcategoryDetail | undefined,
     isTransfer: false,
     transferType: undefined as TransferKind | undefined,
@@ -47,7 +47,7 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
     }
     
     if (formData.isTransfer && !formData.recipient) {
-      newErrors.recipient = 'Получатель обязателен для переводов';
+      newErrors.recipient = 'Получатель обязательн для переводов';
     }
     
     if (formData.isCredit && !formData.bankName) {
@@ -226,7 +226,7 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
               className="w-full px-3 py-2 bg-gray-800 dark:bg-gray-900 border border-gray-700 dark:border-gray-600 rounded-lg text-white dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Тип перевода</option>
-              <option value="to_self">Своим картам</option>
+              <option value="to_self">Свои карты</option>
               <option value="to_family">Семье</option>
               <option value="to_friend">Друзьям</option>
             </select>
@@ -240,7 +240,6 @@ export default function TransactionForm({ onClose, onSuccess }: TransactionFormP
             {errors.recipient && <p className="mt-1 text-sm text-red-500">{errors.recipient}</p>}
           </div>
         )}
-      </div>
 
       <div className="space-y-3">
         <label className="flex items-center gap-2 cursor-pointer">

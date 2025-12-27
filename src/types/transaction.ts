@@ -17,6 +17,7 @@ export interface Transaction {
   subcategory?: string;       // Subcategory for detailed tracking
   is_transfer?: boolean;       // true if this is a transfer
   transfer_type?: string;      // 'to_self' | 'to_family' | 'to_friend'
+  recipient?: string;       // Recipient for transfers
   is_credit?: boolean;         // true if this is a credit payment
   credit_kind?: string;        // 'mortgage' | 'consumer_credit' | 'credit_card' | 'auto_loan'
   bank_name?: string;          // Bank name for credits
@@ -40,4 +41,10 @@ export interface TransactionFilter {
 }
 
 export type CreateTransactionInput = Omit<Transaction, 'id' | 'created_at' | 'updated_at'>;
-export type UpdateTransactionInput = Partial<Omit<Transaction, 'id' | 'user_id' | 'created_at'>>;
+export type UpdateTransactionInput = Partial<Omit<Transaction, 'id' | 'user_id' | 'created_at' | 'updated_at'>>;
+
+// Additional types for enhanced functionality
+export type TransactionCategory = string;
+export type ExpenseSubcategoryDetail = string;
+export type CreditKind = 'mortgage' | 'consumer_credit' | 'credit_card' | 'auto_loan';
+export type TransferKind = 'to_self' | 'to_family' | 'to_friend';
